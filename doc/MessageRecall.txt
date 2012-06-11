@@ -1,0 +1,104 @@
+*MessageRecall.txt*     Browse and re-insert previous (commit, status) messages.
+
+		       MESSAGE RECALL    by Ingo Karkat
+							   *MessageRecall.vim*
+description			|MessageRecall-description|
+usage				|MessageRecall-usage|
+installation			|MessageRecall-installation|
+configuration			|MessageRecall-configuration|
+integration			|MessageRecall-integration|
+limitations			|MessageRecall-limitations|
+known problems			|MessageRecall-known-problems|
+todo				|MessageRecall-todo|
+history				|MessageRecall-history|
+
+==============================================================================
+DESCRIPTION					   *MessageRecall-description*
+
+This plugin ...
+
+HOW IT WORKS								     *
+
+RELATED WORKS								     *
+
+==============================================================================
+USAGE							 *MessageRecall-usage*
+
+CTRL-P, CTRL-N		When the buffer has no unsaved changes: Replace the
+			edited message with a previous / next stored message.
+			When the buffer is modified: Open the previous / first
+			stored message in the preview window.
+
+							      *:MessageRecall*
+:[count]MessageRecall	Insert the [count]'th previous stored message below
+			the current line.
+
+								*:MessageList*
+:MessageList		Show all stored messages in the |quickfix| list,
+			starting with the most recent one.
+							     *:MessageVimGrep*
+:MessageVimGrep	[{pattern}]
+			Search all stored messages for {pattern}, and fill the
+			|quickfix| list with the matches.
+
+
+INSIDE A MESSAGE PREVIEW WINDOW						     *
+
+CTRL-P, CTRL-N		Go to the previous / next stored message.
+
+:MessageRecall		Insert the previewed stored message below the current
+			line in the buffer from which the message preview was
+			started.
+
+==============================================================================
+INSTALLATION					  *MessageRecall-installation*
+
+This script is packaged as a |vimball|. If you have the "gunzip" decompressor
+in your PATH, simply edit the *.vba.gz package in Vim; otherwise, decompress
+the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
+vimball or via the |:UseVimball| command. >
+    vim MessageRecall.vba.gz
+    :so %
+To uninstall, use the |:RmVimball| command.
+
+DEPENDENCIES					  *MessageRecall-dependencies*
+
+- Requires Vim 7.0 or higher.
+
+==============================================================================
+CONFIGURATION					 *MessageRecall-configuration*
+
+For a permanent configuration, put the following commands into your |vimrc|:
+
+						*g:MessageRecall_MyOption*
+To change the default TODO from FOO to BAR, use: >
+    let g:MessageRecall_MyOption = 'BAR'
+<
+==============================================================================
+INTEGRATION					   *MessageRecall-integration*
+
+==============================================================================
+LIMITATIONS					   *MessageRecall-limitations*
+
+KNOWN PROBLEMS					*MessageRecall-known-problems*
+
+TODO							  *MessageRecall-todo*
+
+IDEAS							 *MessageRecall-ideas*
+
+==============================================================================
+HISTORY						       *MessageRecall-history*
+
+GOAL
+First published version.
+
+0.01	09-Jun-2012
+Started development.
+
+==============================================================================
+Copyright: (C) 2012 Ingo Karkat
+The VIM LICENSE applies to this script; see |copyright|.
+
+Maintainer:	Ingo Karkat <ingo@karkat.de>
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
