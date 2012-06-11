@@ -12,6 +12,8 @@
 "	002	12-Jun-2012	Split off BufferPersist functionality from
 "				the original MessageRecall plugin.
 "	001	09-Jun-2012	file creation
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! MessageRecall#MessageStore( messageStoreDirspec )
     if exists('*mkdir') && ! isdirectory(a:messageStoreDirspec)
@@ -44,8 +46,18 @@ function! s:MessageStoreFuncref( messageStoreDirspec )
     return s:funcrefs[a:messageStoreDirspec]
 endfunction
 
-function! MessageRecall#Setup( messageStoreDirspec, range )
-    call BufferPersist#Setup(s:MessageStoreFuncref(a:messageStoreDirspec), a:range)
+function! s:SetupMappings( messageStoreDirspec, range)
+    execute printf('command! -buffer -bang -count=1 -nargs=? -complete=file MessageRecall call MessageRecall#Buffer#Recall(<bang>0, <count>, <q-args>, %s, %s)', string(a:messageStoreDirspec), string(a:range))
+
+    execute printf('nnoremap <silent> <buffer> <C-p> :<C-u>call MessageRecall#Buffer#Replace(1, v:count1, %s, %s)<CR>', string(a:messageStoreDirspec), string(a:range))
+    execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call MessageRecall#Buffer#Replace(0, v:count1, %s, %s)<CR>', string(a:messageStoreDirspec), string(a:range))
 endfunction
 
+function! MessageRecall#Setup( messageStoreDirspec, range )
+    call BufferPersist#Setup(s:MessageStoreFuncref(a:messageStoreDirspec), a:range)
+    call s:SetupMappings(a:messageStoreDirspec, a:range)
+endfunction
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
