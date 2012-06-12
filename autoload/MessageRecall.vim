@@ -2,6 +2,7 @@
 "
 " DEPENDENCIES:
 "   - BufferPersist.vim autoload script
+"   - ingofile.vim autoload script
 "
 " Copyright: (C) 2012 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -15,7 +16,6 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-let s:pathSeparator = (exists('+shellslash') && ! &shellslash ? '\' : '/')
 let s:messageFilenameTemplate = 'message-%Y%m%d_%H%M%S'
 let s:messageFilenameGlob = 'message-*'
 function! MessageRecall#Glob()
@@ -43,11 +43,10 @@ function! s:GetFuncrefs( messageStoreDirspec )
 	let l:messageStoreFunctionName = printf('s:MessageStore%d', s:counter)
 	execute printf(
 	\   "function %s()\n" .
-	\   "   return %s . strftime('%s%s')\n" .
+	\   "   return ingofile#CombineToFilespec(%s, strftime('%s'))\n" .
 	\   "endfunction",
 	\   l:messageStoreFunctionName,
 	\   string(a:messageStoreDirspec),
-	\   s:pathSeparator,
 	\   s:messageFilenameTemplate
 	\)
 	let l:completeFunctionName = printf('<SID>CompleteFunc%d', s:counter)
