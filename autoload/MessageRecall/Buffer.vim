@@ -4,6 +4,7 @@
 "   - escapings.vim autoload script
 "   - ingofile.vim autoload script
 "   - EditSimilar/Next.vim autoload script
+"   - MessageRecall.vim autoload script
 "
 " Copyright: (C) 2012 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -108,7 +109,26 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 endfunction
 
 function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
-    let l:winNr = bufwinnr(a:targetBufNr)
+    let l:winNr = -1
+    if a:targetBufNr >= 1
+	" We got a target buffer passed in.
+	let l:winNr = bufwinnr(a:targetBufNr)
+    elseif ! empty(&l:filetype)
+	" No target buffer is known, go search for a buffer with the same
+	" filetype that is not a stored message.
+	let l:winNr =
+	\   bufwinnr(
+	\       get(
+	\           filter(
+	\               tabpagebuflist(),
+	\               'getbufvar(v:val, "&filetype") ==# &filetype && ! MessageRecall#IsStoredMessage(bufname(v:val))'
+	\           ),
+	\           0,
+	\           -1
+	\       )
+	\   )
+    endif
+
     if l:winNr == -1
 	let v:errmsg = 'No target message buffer opened'
 	echohl ErrorMsg
@@ -122,8 +142,8 @@ function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
     execute l:winNr 'wincmd w'
     execute 'MessageRecall' . a:bang escapings#fnameescape(l:message)
 endfunction
-function! s:GetPreviewCommands( targetBufNr, filetype )
-    return '+' .
+function! MessageRecall#Buffer#GetPreviewCommands( targetBufNr, filetype )
+    return
     \	printf('call MessageRecall#Buffer#PreviewSetup(%d,%s)', a:targetBufNr, string(a:filetype)) .
     \	'|setlocal readonly' .
     \   (empty(a:filetype) ? '' : printf('|setf %s', a:filetype))
@@ -131,7 +151,7 @@ endfunction
 function! MessageRecall#Buffer#PreviewSetup( targetBufNr, filetype )
     execute printf('command! -buffer -bang MessageRecall call MessageRecall#Buffer#PreviewRecall(<q-bang>, %d)', a:targetBufNr)
 
-    let l:command = 'view ' . substitute(escape(s:GetPreviewCommands(a:targetBufNr, a:filetype), ' \'), '|', '<Bar>', 'g')
+    let l:command = 'view +' . substitute(escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, a:filetype), ' \'), '|', '<Bar>', 'g')
     execute printf('nnoremap <silent> <buffer> <C-p> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1, -1, MessageRecall#Glob())<CR>', string(l:command))
     execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1,  1, MessageRecall#Glob())<CR>', string(l:command))
 endfunction
@@ -141,7 +161,7 @@ function! MessageRecall#Buffer#Preview( count, filespec, messageStoreDirspec, ra
 	return
     endif
 
-    execute 'keepalt pedit' escape(s:GetPreviewCommands(bufnr(''), &l:filetype), ' \') escapings#fnameescape(l:filespec)
+    execute 'keepalt pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(bufnr(''), &l:filetype), ' \') escapings#fnameescape(l:filespec)
 endfunction
 
 function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range )
