@@ -2,6 +2,7 @@
 "
 " DEPENDENCIES:
 "   - escapings.vim autoload script
+"   - ingofile.vim autoload script
 "   - EditSimilar/Next.vim autoload script
 "
 " Copyright: (C) 2012 Ingo Karkat
@@ -27,17 +28,16 @@ function! s:GetRange( range )
     return l:contents
 endfunction
 
-let s:pathSeparator = (exists('+shellslash') && ! &shellslash ? '\' : '/')
 function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     " Complete first files from a:messageStoreDirspec for the {filename} argument,
     " then any path- and filespec from the CWD for {filespec}.
-    let l:messageStoreDirspecPrefix = glob(a:messageStoreDirspec . s:pathSeparator)
+    let l:messageStoreDirspecPrefix = glob(ingofile#CombineToFilespec(a:messageStoreDirspec, ''))
     return
     \   map(
     \       reverse(
     \           map(
     \               split(
-    \                   glob(a:messageStoreDirspec . s:pathSeparator . a:ArgLead . '*'),
+    \                   glob(ingofile#CombineToFilespec(a:messageStoreDirspec, a:ArgLead . '*')),
     \                   "\n"
     \               ),
     \               'strpart(v:val, len(l:messageStoreDirspecPrefix))'
@@ -48,14 +48,14 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \               glob(a:ArgLead . '*'),
     \               "\n"
     \           ),
-    \           'isdirectory(v:val) ? v:val . s:pathSeparator : v:val'
+    \           'isdirectory(v:val) ? ingofile#CombineToFilespec(v:val, '') : v:val'
     \       ),
     \       'escapings#fnameescape(v:val)'
     \   )
 endfunction
 
 function! s:GetIndexedMessageFile( messageStoreDirspec, index )
-    let l:files = split(glob(a:messageStoreDirspec . s:pathSeparator . MessageRecall#Glob()), "\n")
+    let l:files = split(glob(ingofile#CombineToFilespec(a:messageStoreDirspec, MessageRecall#Glob())), "\n")
     let l:filespec = get(l:files, a:index, '')
     if empty(l:filespec)
 	let v:errmsg = printf('Only %d messages available', len(l:files))
@@ -73,7 +73,7 @@ function! s:GetMessageFilespec( count, filespec, messageStoreDirspec )
 	if filereadable(a:filespec)
 	    let l:filespec = a:filespec
 	else
-	    let l:filespec = a:messageStoreDirspec . s:pathSeparator . a:filespec
+	    let l:filespec = ingofile#CombineToFilespec(a:messageStoreDirspec, a:filespec)
 	    if ! filereadable(l:filespec)
 		let l:filespec = ''
 
@@ -106,14 +106,42 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 	let b:MessageRecall_ChangedTick = b:changedtick
     endif
 endfunction
+
+function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
+    let l:winNr = bufwinnr(a:targetBufNr)
+    if l:winNr == -1
+	let v:errmsg = 'No target message buffer opened'
+	echohl ErrorMsg
+	echomsg v:errmsg
+	echohl None
+
+	return
+    endif
+
+    let l:message = expand('%:t')
+    execute l:winNr 'wincmd w'
+    execute 'MessageRecall' . a:bang escapings#fnameescape(l:message)
+endfunction
+function! s:GetPreviewCommands( targetBufNr, filetype )
+    return '+' .
+    \	printf('call MessageRecall#Buffer#PreviewSetup(%d,%s)', a:targetBufNr, string(a:filetype)) .
+    \	'|setlocal readonly' .
+    \   (empty(a:filetype) ? '' : printf('|setf %s', a:filetype))
+endfunction
+function! MessageRecall#Buffer#PreviewSetup( targetBufNr, filetype )
+    execute printf('command! -buffer -bang MessageRecall call MessageRecall#Buffer#PreviewRecall(<q-bang>, %d)', a:targetBufNr)
+
+    let l:command = 'view ' . substitute(escape(s:GetPreviewCommands(a:targetBufNr, a:filetype), ' \'), '|', '<Bar>', 'g')
+    execute printf('nnoremap <silent> <buffer> <C-p> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1, -1, MessageRecall#Glob())<CR>', string(l:command))
+    execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1,  1, MessageRecall#Glob())<CR>', string(l:command))
+endfunction
 function! MessageRecall#Buffer#Preview( count, filespec, messageStoreDirspec, range )
     let l:filespec = s:GetMessageFilespec(a:count, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
 	return
     endif
 
-    let l:keepFiletypeCommand = (empty(&l:filetype) ? '+setlocal\ readonly' : printf('+setlocal\ readonly\|setf\ %s', escape(&l:filetype, '\')))
-    execute 'keepalt pedit' l:keepFiletypeCommand escapings#fnameescape(l:filespec)
+    execute 'keepalt pedit' escape(s:GetPreviewCommands(bufnr(''), &l:filetype), ' \') escapings#fnameescape(l:filespec)
 endfunction
 
 function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range )
@@ -121,7 +149,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	call EditSimilar#Next#Open(
 	\   'MessageRecall!',
 	\   0,
-	\   a:messageStoreDirspec . s:pathSeparator . b:MessageRecall_Filename,
+	\   ingofile#CombineToFilespec(a:messageStoreDirspec, b:MessageRecall_Filename),
 	\   a:count,
 	\   (a:isPrevious ? -1 : 1),
 	\   MessageRecall#Glob()
