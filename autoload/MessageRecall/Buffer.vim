@@ -94,9 +94,10 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 	return
     endif
 
+    let l:range = (empty(a:range) ? '%' : a:range)
     let l:insertPoint = ''
-    if a:isReplace || s:GetRange(a:range) =~# '^\_s*$'
-	silent execute a:range 'delete _'
+    if a:isReplace || s:GetRange(l:range) =~# '^\_s*$'
+	silent execute l:range 'delete _'
 	let b:MessageRecall_Filename = fnamemodify(l:filespec, ':t')
 	let l:insertPoint = '0'
     endif
