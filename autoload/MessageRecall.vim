@@ -2,6 +2,7 @@
 "
 " DEPENDENCIES:
 "   - BufferPersist.vim autoload script
+"   - MessageRecall/Buffer.autoload script
 "   - ingofile.vim autoload script
 "
 " Copyright: (C) 2012 Ingo Karkat
@@ -70,16 +71,40 @@ function! s:SetupMappings( messageStoreDirspec, range, CompleteFuncref )
     execute printf('nnoremap <silent> <buffer> <C-p> :<C-u>call MessageRecall#Buffer#Replace(1, v:count1, %s, %s)<CR>', string(a:messageStoreDirspec), string(a:range))
     execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call MessageRecall#Buffer#Replace(0, v:count1, %s, %s)<CR>', string(a:messageStoreDirspec), string(a:range))
 endfunction
+let s:autocmds = {}
+function! s:SetupAutocmds( messageStoreDirspec )
+    " When a stored message is opened via :MessagePreview, settings like
+    " filetype and the setup of the mappings and commands is handled
+    " by the command itself. But when a stored message is opened through other
+    " means (like from the quickfix list, or explicitly via :edit), they are
+    " not. We can identify the stored messages through their location in the
+    " message store directory, so let's set up an autocmd (once for every set up
+    " message store).
+    if ! has_key(s:autocmds, a:messageStoreDirspec)
+	augroup MessageRecall
+	    execute printf('autocmd BufRead %s %s',
+	    \   ingofile#CombineToFilespec(a:messageStoreDirspec, MessageRecall#Glob()),
+	    \   MessageRecall#Buffer#GetPreviewCommands(-1, &l:filetype)
+	    \)
+	augroup END
 
+	let s:autocmds[a:messageStoreDirspec] = 1
+    endif
+endfunction
+
+function! MessageRecall#IsStoredMessage( filespec )
+    return fnamemodify(a:filespec, ':t') =~# substitute(s:messageFilenameTemplate, '%.' , '.*', 'g')
+endfunction
 function! MessageRecall#Setup( messageStoreDirspec, range )
-    if expand('%:t') =~# substitute(s:messageFilenameTemplate, '%.' , '.*', 'g')
+    if MessageRecall#IsStoredMessage(expand('%'))
 	" Avoid recursive setup when a stored message is edited.
 	return
     endif
 
     let [l:MessageStoreFuncref, l:CompleteFuncref] = s:GetFuncrefs(a:messageStoreDirspec)
-    call BufferPersist#Setup(l:MessageStoreFuncref, a:range)
+    call BufferPersist#Setup(l:MessageStoreFuncref, {'range': a:range})
     call s:SetupMappings(a:messageStoreDirspec, a:range, l:CompleteFuncref)
+    call s:SetupAutocmds(a:messageStoreDirspec)
 endfunction
 
 let &cpo = s:save_cpo
