@@ -3,6 +3,7 @@
 " DEPENDENCIES:
 "   - escapings.vim autoload script
 "   - ingofile.vim autoload script
+"   - ingointegration.vim autoload script
 "   - EditSimilar/Next.vim autoload script
 "   - MessageRecall.vim autoload script
 "
@@ -15,19 +16,6 @@
 "	001	12-Jun-2012	file creation
 let s:save_cpo = &cpo
 set cpo&vim
-
-function! s:GetRange( range )
-    let l:save_clipboard = &clipboard
-    set clipboard= " Avoid clobbering the selection and clipboard registers.
-    let l:save_reg = getreg('"')
-    let l:save_regmode = getregtype('"')
-	silent execute a:range . 'yank'
-	let l:contents = @"
-    call setreg('"', l:save_reg, l:save_regmode)
-    let &clipboard = l:save_clipboard
-
-    return l:contents
-endfunction
 
 function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     " Complete first files from a:messageStoreDirspec for the {filename} argument,
@@ -96,7 +84,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 
     let l:range = (empty(a:range) ? '%' : a:range)
     let l:insertPoint = ''
-    if a:isReplace || s:GetRange(l:range) =~# '^\_s*$'
+    if a:isReplace || ingointegration#GetRange(l:range) =~# '^\n*$'
 	silent execute l:range 'delete _'
 	let b:MessageRecall_Filename = fnamemodify(l:filespec, ':t')
 	let l:insertPoint = '0'
