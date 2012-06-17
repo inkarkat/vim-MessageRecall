@@ -2,7 +2,7 @@
 "
 " DEPENDENCIES:
 "   - BufferPersist.vim autoload script
-"   - MessageRecall/Buffer.autoload script
+"   - MessageRecall/Buffer.vim autoload script
 "   - ingofile.vim autoload script
 "
 " Copyright: (C) 2012 Ingo Karkat
@@ -11,6 +11,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.003	18-Jun-2012	Due to a change in the BufferPersist API, the
+"				messageStoreFunction must now take a bufNr
+"				argument.
 "	002	12-Jun-2012	Split off BufferPersist functionality from
 "				the original MessageRecall plugin.
 "	001	09-Jun-2012	file creation
@@ -43,7 +46,7 @@ function! s:GetFuncrefs( messageStoreDirspec )
 
 	let l:messageStoreFunctionName = printf('s:MessageStore%d', s:counter)
 	execute printf(
-	\   "function %s()\n" .
+	\   "function %s( bufNr )\n" .
 	\   "   return ingofile#CombineToFilespec(%s, strftime('%s'))\n" .
 	\   "endfunction",
 	\   l:messageStoreFunctionName,
@@ -96,6 +99,27 @@ function! MessageRecall#IsStoredMessage( filespec )
     return fnamemodify(a:filespec, ':t') =~# substitute(s:messageFilenameTemplate, '%.' , '.*', 'g')
 endfunction
 function! MessageRecall#Setup( messageStoreDirspec, range )
+"******************************************************************************
+"* PURPOSE:
+"   Set up autocmds for the current buffer to automatically persist the buffer
+"   contents within a:range when Vim is done editing the buffer (both when is
+"   was saved to a file and also when it was discarded, e.g. via :bdelete!), and
+"   corresponding commands and mappings to iterate and recall previously stored
+"   mappings.
+"* ASSUMPTIONS / PRECONDITIONS:
+"   None.
+"* EFFECTS / POSTCONDITIONS:
+"   Writes buffer contents within a:range to a timestamped message file in
+"   a:messageStoreDirspec.
+"* INPUTS:
+"   a:messageStoreDirspec   Storage directory for the messages. The directory
+"			    will be created if it doesn't exist yet.
+"   a:range A |:range| expression limiting the lines of the buffer that should
+"	    be persisted. This can be used to filter away some content. Default
+"	    is "", which includes the entire buffer.
+"* RETURN VALUES:
+"   None.
+"******************************************************************************
     if MessageRecall#IsStoredMessage(expand('%'))
 	" Avoid recursive setup when a stored message is edited.
 	return
