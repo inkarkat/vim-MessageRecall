@@ -30,8 +30,18 @@ CTRL-P, CTRL-N		When the buffer has no unsaved changes: Replace the
 			stored message in the preview window.
 
 							      *:MessageRecall*
-:[count]MessageRecall	Insert the [count]'th previous stored message below
+:[count]MessageRecall[!]
+			Insert the [count]'th previous stored message below
 			the current line.
+:MessageRecall[!] {message}|{filespec}
+			Insert {message} (auto-completed from the message
+			store directory) or any arbitrary {filespec} contents
+			below the current line.
+			When the existing message consists of just empty
+			lines (from the message template), the inserted
+			message replaces those empty lines.
+			With [!]: Replace an existing message with the
+			inserted one.
 
 								*:MessageList*
 :MessageList		Show all stored messages in the |quickfix| list,
