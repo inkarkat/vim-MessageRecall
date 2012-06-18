@@ -6,6 +6,7 @@
 "   - ingointegration.vim autoload script
 "   - EditSimilar/Next.vim autoload script
 "   - MessageRecall.vim autoload script
+"   - MessageRecall/MappingsAndCommands.vim autoload script
 "
 " Copyright: (C) 2012 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -13,6 +14,15 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.003	19-Jun-2012	Fix syntax error in
+"				MessageRecall#Buffer#Complete().
+"				Extract mapping and command setup to
+"				MessagRecall/MappingsAndCommands.vim.
+"				Do not return duplicate completion matches when
+"				completing from the message store directory.
+"				This happens all the time with 'autochdir' and
+"				doing :MessageView from the preview window.
+"				Prune unnecessary a:range argument.
 "   1.00.002	18-Jun-2012	Completed initial functionality.
 "				Implement previewing via CTRL-P / CTRL-N.
 "	001	12-Jun-2012	file creation
@@ -23,6 +33,7 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     " Complete first files from a:messageStoreDirspec for the {filename} argument,
     " then any path- and filespec from the CWD for {filespec}.
     let l:messageStoreDirspecPrefix = glob(ingofile#CombineToFilespec(a:messageStoreDirspec, ''))
+    let l:isInMessageStoreDir = (ingofile#CombineToFilespec(getcwd(), '') ==# l:messageStoreDirspecPrefix)
     return
     \   map(
     \       reverse(
@@ -35,11 +46,16 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \           )
     \       ) +
     \       map(
-    \           split(
-    \               glob(a:ArgLead . '*'),
-    \               "\n"
+    \           filter(
+    \               split(
+    \                   glob(a:ArgLead . '*'),
+    \                   "\n"
+    \               ),
+    \               'l:isInMessageStoreDir ?' .
+    \	                'ingofile#CombineToFilespec(fnamemodify(v:val, ":p:h"), "") !=# l:messageStoreDirspecPrefix :' .
+    \	                '1'
     \           ),
-    \           'isdirectory(v:val) ? ingofile#CombineToFilespec(v:val, '') : v:val'
+    \           'isdirectory(v:val) ? ingofile#CombineToFilespec(v:val, "") : v:val'
     \       ),
     \       'escapings#fnameescape(v:val)'
     \   )
@@ -135,18 +151,11 @@ function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
 endfunction
 function! MessageRecall#Buffer#GetPreviewCommands( targetBufNr, filetype )
     return
-    \	printf('call MessageRecall#Buffer#PreviewSetup(%d,%s)', a:targetBufNr, string(a:filetype)) .
+    \	printf('call MessageRecall#MappingsAndCommands#PreviewSetup(%d,%s)', a:targetBufNr, string(a:filetype)) .
     \	'|setlocal readonly' .
     \   (empty(a:filetype) ? '' : printf('|setf %s', a:filetype))
 endfunction
-function! MessageRecall#Buffer#PreviewSetup( targetBufNr, filetype )
-    execute printf('command! -buffer -bang MessageRecall call MessageRecall#Buffer#PreviewRecall(<q-bang>, %d)', a:targetBufNr)
-
-    let l:command = 'view +' . substitute(escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, a:filetype), ' \'), '|', '<Bar>', 'g')
-    execute printf('nnoremap <silent> <buffer> <C-p> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1, -1, MessageRecall#Glob())<CR>', string(l:command))
-    execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1,  1, MessageRecall#Glob())<CR>', string(l:command))
-endfunction
-function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStoreDirspec, range )
+function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStoreDirspec )
     let l:index = (a:isPrevious ? -1 * a:count : a:count - 1)
     let l:filespec = s:GetMessageFilespec(l:index, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
@@ -156,7 +165,7 @@ function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStor
     execute 'keepalt pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(bufnr(''), &l:filetype), ' \') escapings#fnameescape(l:filespec)
 endfunction
 
-function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range )
+function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec )
     if exists('b:MessageRecall_ChangedTick') && b:MessageRecall_ChangedTick == b:changedtick
 	call EditSimilar#Next#Open(
 	\   'MessageRecall!',
@@ -174,7 +183,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 
 	execute 'MessageRecall!' escapings#fnameescape(l:filespec)
     else
-	call MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:range)
+	call MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec)
     endif
 endfunction
 
