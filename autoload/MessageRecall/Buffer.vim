@@ -13,6 +13,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.002	18-Jun-2012	Completed initial functionality.
+"				Implement previewing via CTRL-P / CTRL-N.
 "	001	12-Jun-2012	file creation
 let s:save_cpo = &cpo
 set cpo&vim
@@ -55,9 +57,9 @@ function! s:GetIndexedMessageFile( messageStoreDirspec, index )
 
     return l:filespec
 endfunction
-function! s:GetMessageFilespec( count, filespec, messageStoreDirspec )
+function! s:GetMessageFilespec( index, filespec, messageStoreDirspec )
     if empty(a:filespec)
-	let l:filespec = s:GetIndexedMessageFile(a:messageStoreDirspec, -1 * a:count)
+	let l:filespec = s:GetIndexedMessageFile(a:messageStoreDirspec, a:index)
     else
 	if filereadable(a:filespec)
 	    let l:filespec = a:filespec
@@ -77,7 +79,7 @@ function! s:GetMessageFilespec( count, filespec, messageStoreDirspec )
     return l:filespec
 endfunction
 function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range )
-    let l:filespec = s:GetMessageFilespec(a:count, a:filespec, a:messageStoreDirspec)
+    let l:filespec = s:GetMessageFilespec(-1 * a:count, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
 	return
     endif
@@ -144,8 +146,9 @@ function! MessageRecall#Buffer#PreviewSetup( targetBufNr, filetype )
     execute printf('nnoremap <silent> <buffer> <C-p> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1, -1, MessageRecall#Glob())<CR>', string(l:command))
     execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1,  1, MessageRecall#Glob())<CR>', string(l:command))
 endfunction
-function! MessageRecall#Buffer#Preview( count, filespec, messageStoreDirspec, range )
-    let l:filespec = s:GetMessageFilespec(a:count, a:filespec, a:messageStoreDirspec)
+function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStoreDirspec, range )
+    let l:index = (a:isPrevious ? -1 * a:count : a:count - 1)
+    let l:filespec = s:GetMessageFilespec(l:index, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
 	return
     endif
@@ -171,7 +174,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 
 	execute 'MessageRecall!' escapings#fnameescape(l:filespec)
     else
-	"call MessageRecall#Buffer#Preview(a:messageStoreDirspec)
+	call MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:range)
     endif
 endfunction
 
