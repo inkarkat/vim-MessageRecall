@@ -15,19 +15,40 @@ history				|MessageRecall-history|
 ==============================================================================
 DESCRIPTION					   *MessageRecall-description*
 
-This plugin ...
+This plugin automatically persists (parts of) buffers used for the editing of
+commit (or other) messages, where Vim is invoked as the editor from an
+external tool. In these buffers, it sets up mappings and commands to iterate
+through stored past messages, and recall the contents for use in the currently
+edited message. This way, you automatically collect a history of (committed or
+aborted) past messages, and can quickly base your current message on contents
+recalled from that history.
 
 HOW IT WORKS								     *
+
+SEE ALSO								     *
 
 RELATED WORKS								     *
 
 ==============================================================================
 USAGE							 *MessageRecall-usage*
 
+The plugin is completely inactive until you set it up for a particular
+buffer through the following function; you'll find the details directly in the
+.vim/autoload/MessageRecall.vim implementation file.
+
+MessageRecall#Setup( messageStoreDirspec, range )
+
+
+INSIDE THE CURRENT MESSAGE BUFFER					     *
+						 *MessageRecall-message-usage*
+After the setup, the following mappings and commands are available in the
+current message buffer:
+
 CTRL-P, CTRL-N		When the buffer has no unsaved changes: Replace the
-			edited message with a previous / next stored message.
-			When the buffer is modified: Open the previous / first
-			stored message in the preview window.
+			edited message with a [count]'th previous / next
+			stored message.
+			When the buffer is modified: Open the [count]'th
+			previous / first stored message in the preview window.
 
 							      *:MessageRecall*
 :[count]MessageRecall[!]
@@ -37,23 +58,16 @@ CTRL-P, CTRL-N		When the buffer has no unsaved changes: Replace the
 			Insert {message} (auto-completed from the message
 			store directory) or any arbitrary {filespec} contents
 			below the current line.
+
 			When the existing message consists of just empty
 			lines (from the message template), the inserted
 			message replaces those empty lines.
 			With [!]: Replace an existing message with the
 			inserted one.
 
-								*:MessageList*
-:MessageList		Show all stored messages in the |quickfix| list,
-			starting with the most recent one.
-							     *:MessageVimGrep*
-:MessageVimGrep	[{pattern}]
-			Search all stored messages for {pattern}, and fill the
-			|quickfix| list with the matches.
-
 
 INSIDE A MESSAGE PREVIEW WINDOW						     *
-
+						 *MessageRecall-preview-usage*
 CTRL-P, CTRL-N		Go to the previous / next stored message.
 
 :MessageRecall		Insert the previewed stored message below the current
@@ -74,16 +88,12 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES					  *MessageRecall-dependencies*
 
 - Requires Vim 7.0 or higher.
+- Requires the EditSimilar plugin (vimscript #2544), version 2.00 or higher.
+- Requires the BufferPersist plugin (vimscript #0000).
 
 ==============================================================================
 CONFIGURATION					 *MessageRecall-configuration*
 
-For a permanent configuration, put the following commands into your |vimrc|:
-
-						*g:MessageRecall_MyOption*
-To change the default TODO from FOO to BAR, use: >
-    let g:MessageRecall_MyOption = 'BAR'
-<
 ==============================================================================
 INTEGRATION					   *MessageRecall-integration*
 
@@ -94,12 +104,20 @@ KNOWN PROBLEMS					*MessageRecall-known-problems*
 
 TODO							  *MessageRecall-todo*
 
+								*:MessageList*
+:MessageList		Show all stored messages in the |quickfix| list,
+			starting with the most recent one.
+							     *:MessageVimGrep*
+:MessageVimGrep	[{pattern}]
+			Search all stored messages for {pattern}, and fill the
+			|quickfix| list with the matches.
+
 IDEAS							 *MessageRecall-ideas*
 
 ==============================================================================
 HISTORY						       *MessageRecall-history*
 
-GOAL
+1.00	18-Jun-2012
 First published version.
 
 0.01	09-Jun-2012
