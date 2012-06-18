@@ -14,6 +14,7 @@
 "   1.00.003	18-Jun-2012	Due to a change in the BufferPersist API, the
 "				messageStoreFunction must now take a bufNr
 "				argument.
+"				FIX: Actually use MessageRecall#MessageStore().
 "	002	12-Jun-2012	Split off BufferPersist functionality from
 "				the original MessageRecall plugin.
 "	001	09-Jun-2012	file creation
@@ -32,7 +33,7 @@ function! MessageRecall#MessageStore( messageStoreDirspec )
 	call mkdir(a:messageStoreDirspec, 'p', 0700)
     endif
 
-    return a:messageStoreDirspec . strftime('/buffer-%Y%m%d_%H%M%S')
+    return ingofile#CombineToFilespec(a:messageStoreDirspec, strftime(s:messageFilenameTemplate))
 endfunction
 
 let s:counter = 0
@@ -47,11 +48,10 @@ function! s:GetFuncrefs( messageStoreDirspec )
 	let l:messageStoreFunctionName = printf('s:MessageStore%d', s:counter)
 	execute printf(
 	\   "function %s( bufNr )\n" .
-	\   "   return ingofile#CombineToFilespec(%s, strftime('%s'))\n" .
+	\   "   return MessageRecall#MessageStore(%s)\n" .
 	\   "endfunction",
 	\   l:messageStoreFunctionName,
-	\   string(a:messageStoreDirspec),
-	\   s:messageFilenameTemplate
+	\   string(a:messageStoreDirspec)
 	\)
 	let l:completeFunctionName = printf('<SID>CompleteFunc%d', s:counter)
 	execute printf(
