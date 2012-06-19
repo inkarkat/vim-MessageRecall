@@ -3,6 +3,7 @@
 " DEPENDENCIES:
 "   - BufferPersist.vim autoload script
 "   - MessageRecall/Buffer.vim autoload script
+"   - MessageRecall/MappingsAndCommands.vim autoload script
 "   - ingofile.vim autoload script
 "
 " Copyright: (C) 2012 Ingo Karkat
@@ -11,6 +12,11 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.004	19-Jun-2012	Rename :MessagePreview to :MessageView, as the
+"				former hints at previewing the current commit
+"				message, not viewing older messages.
+"				Extract mapping and command setup to
+"				MessagRecall/MappingsAndCommands.vim.
 "   1.00.003	18-Jun-2012	Due to a change in the BufferPersist API, the
 "				messageStoreFunction must now take a bufNr
 "				argument.
@@ -39,9 +45,9 @@ endfunction
 let s:counter = 0
 let s:funcrefs = {}
 function! s:function(name)
-    return function(substitute(a:name, '^s:', matchstr(expand('<sfile>'), '<SNR>\d\+_\zefunction$'),''))
+    return substitute(a:name, '^s:', matchstr(expand('<sfile>'), '<SNR>\d\+_\zefunction$'),'')
 endfunction
-function! s:GetFuncrefs( messageStoreDirspec )
+function! MessageRecall#GetFuncrefs( messageStoreDirspec )
     if ! has_key(s:funcrefs, a:messageStoreDirspec)
 	let s:counter += 1
 
@@ -53,7 +59,7 @@ function! s:GetFuncrefs( messageStoreDirspec )
 	\   l:messageStoreFunctionName,
 	\   string(a:messageStoreDirspec)
 	\)
-	let l:completeFunctionName = printf('<SID>CompleteFunc%d', s:counter)
+	let l:completeFunctionName = printf('s:CompleteFunc%d', s:counter)
 	execute printf(
 	\   "function %s( ArgLead, CmdLine, CursorPos )\n" .
 	\   "   return MessageRecall#Buffer#Complete(%s, a:ArgLead)\n" .
@@ -61,22 +67,15 @@ function! s:GetFuncrefs( messageStoreDirspec )
 	\   l:completeFunctionName,
 	\   string(a:messageStoreDirspec)
 	\)
-	let s:funcrefs[a:messageStoreDirspec] = [s:function(messageStoreFunctionName), completeFunctionName]
+	let s:funcrefs[a:messageStoreDirspec] = [function(s:function(messageStoreFunctionName)), s:function(completeFunctionName)]
     endif
 
     return s:funcrefs[a:messageStoreDirspec]
 endfunction
 
-function! s:SetupMappings( messageStoreDirspec, range, CompleteFuncref )
-    execute printf('command! -buffer -bang -count=1 -nargs=? -complete=customlist,%s MessageRecall  call MessageRecall#Buffer#Recall(<bang>0, <count>, <q-args>, %s, %s)', a:CompleteFuncref, string(a:messageStoreDirspec), string(a:range))
-    execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessagePreview call MessageRecall#Buffer#Preview(<count>, <q-args>, %s, %s)', a:CompleteFuncref, string(a:messageStoreDirspec), string(a:range))
-
-    execute printf('nnoremap <silent> <buffer> <C-p> :<C-u>call MessageRecall#Buffer#Replace(1, v:count1, %s, %s)<CR>', string(a:messageStoreDirspec), string(a:range))
-    execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call MessageRecall#Buffer#Replace(0, v:count1, %s, %s)<CR>', string(a:messageStoreDirspec), string(a:range))
-endfunction
 let s:autocmds = {}
 function! s:SetupAutocmds( messageStoreDirspec )
-    " When a stored message is opened via :MessagePreview, settings like
+    " When a stored message is opened via :MessageView, settings like
     " filetype and the setup of the mappings and commands is handled
     " by the command itself. But when a stored message is opened through other
     " means (like from the quickfix list, or explicitly via :edit), they are
@@ -125,10 +124,11 @@ function! MessageRecall#Setup( messageStoreDirspec, range )
 	return
     endif
 
-    let [l:MessageStoreFuncref, l:CompleteFuncref] = s:GetFuncrefs(a:messageStoreDirspec)
+    let l:messageStoreDirspec = ingofile#NormalizePathSeparators(a:messageStoreDirspec)
+    let [l:MessageStoreFuncref, l:CompleteFuncref] = MessageRecall#GetFuncrefs(l:messageStoreDirspec)
     call BufferPersist#Setup(l:MessageStoreFuncref, {'range': a:range})
-    call s:SetupMappings(a:messageStoreDirspec, a:range, l:CompleteFuncref)
-    call s:SetupAutocmds(a:messageStoreDirspec)
+    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, a:range, l:CompleteFuncref)
+    call s:SetupAutocmds(l:messageStoreDirspec)
 endfunction
 
 let &cpo = s:save_cpo
