@@ -12,6 +12,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.005	20-Jun-2012	Change API to pass optional a:options, like
+"				BufferPersist does. Right now all options are
+"				forwarded to it, anyway.
 "   1.00.004	19-Jun-2012	Rename :MessagePreview to :MessageView, as the
 "				former hints at previewing the current commit
 "				message, not viewing older messages.
@@ -97,25 +100,34 @@ endfunction
 function! MessageRecall#IsStoredMessage( filespec )
     return fnamemodify(a:filespec, ':t') =~# substitute(s:messageFilenameTemplate, '%.' , '.*', 'g')
 endfunction
-function! MessageRecall#Setup( messageStoreDirspec, range )
+function! MessageRecall#Setup( messageStoreDirspec, ... )
 "******************************************************************************
 "* PURPOSE:
 "   Set up autocmds for the current buffer to automatically persist the buffer
-"   contents within a:range when Vim is done editing the buffer (both when is
-"   was saved to a file and also when it was discarded, e.g. via :bdelete!), and
-"   corresponding commands and mappings to iterate and recall previously stored
-"   mappings.
+"   contents within a:options.range when Vim is done editing the buffer (both
+"   when is was saved to a file and also when it was discarded, e.g. via
+"   :bdelete!), and corresponding commands and mappings to iterate and recall
+"   previously stored mappings.
 "* ASSUMPTIONS / PRECONDITIONS:
 "   None.
 "* EFFECTS / POSTCONDITIONS:
-"   Writes buffer contents within a:range to a timestamped message file in
-"   a:messageStoreDirspec.
+"   Writes buffer contents within a:options.range to a timestamped message file
+"   in a:messageStoreDirspec.
 "* INPUTS:
 "   a:messageStoreDirspec   Storage directory for the messages. The directory
 "			    will be created if it doesn't exist yet.
-"   a:range A |:range| expression limiting the lines of the buffer that should
-"	    be persisted. This can be used to filter away some content. Default
-"	    is "", which includes the entire buffer.
+"   a:options               Optional Dictionary with configuration:
+"   a:options.range         A |:range| expression limiting the lines of the
+"			    buffer that should be persisted. This can be used to
+"			    filter away some content. Default is "", which
+"			    includes the entire buffer.
+"   a:options.whenRangeNoMatch  Specifies the behavior when a:options.range
+"				doesn't match. One of:
+"				"error": an error message is printed and the
+"				buffer contents are not persisted
+"				"ignore": the buffer contents silently are not
+"				persisted
+"				"all": the entire buffer is persisted instead
 "* RETURN VALUES:
 "   None.
 "******************************************************************************
@@ -126,8 +138,12 @@ function! MessageRecall#Setup( messageStoreDirspec, range )
 
     let l:messageStoreDirspec = ingofile#NormalizePathSeparators(a:messageStoreDirspec)
     let [l:MessageStoreFuncref, l:CompleteFuncref] = MessageRecall#GetFuncrefs(l:messageStoreDirspec)
-    call BufferPersist#Setup(l:MessageStoreFuncref, {'range': a:range})
-    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, a:range, l:CompleteFuncref)
+
+    let l:options = (a:0 ? a:1 : {})
+    call BufferPersist#Setup(l:MessageStoreFuncref, l:options)
+
+    let l:range = get(l:options, 'range', '')
+    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, l:range, l:CompleteFuncref)
     call s:SetupAutocmds(l:messageStoreDirspec)
 endfunction
 
