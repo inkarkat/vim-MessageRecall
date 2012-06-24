@@ -50,6 +50,15 @@ CTRL-P, CTRL-N		When the buffer has no unsaved changes: Replace the
 			When the buffer is modified: Open the [count]'th
 			previous / first stored message in the preview window.
 
+								*:MessageView*
+:[count]MessageView
+			View the [count]'th previous stored message in the
+			|preview-window|.
+:MessageView {message}|{filespec}
+			View {message} (auto-completed from the message store
+			directory) or any arbitrary {filespec} contents
+			in the |preview-window|.
+
 							      *:MessageRecall*
 :[count]MessageRecall[!]
 			Insert the [count]'th previous stored message below
