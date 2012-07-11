@@ -23,6 +23,11 @@
 "				This happens all the time with 'autochdir' and
 "				doing :MessageView from the preview window.
 "				Prune unnecessary a:range argument.
+"				Pass in a:targetBufNr to
+"				MessageRecall#Buffer#Preview(), now that it is
+"				also used from inside the preview window, and do
+"				the same to MessageRecall#Buffer#Replace() for
+"				consistency.
 "   1.00.002	18-Jun-2012	Completed initial functionality.
 "				Implement previewing via CTRL-P / CTRL-N.
 "	001	12-Jun-2012	file creation
@@ -155,17 +160,17 @@ function! MessageRecall#Buffer#GetPreviewCommands( targetBufNr, filetype )
     \	'|setlocal readonly' .
     \   (empty(a:filetype) ? '' : printf('|setf %s', a:filetype))
 endfunction
-function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStoreDirspec )
+function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStoreDirspec, targetBufNr )
     let l:index = (a:isPrevious ? -1 * a:count : a:count - 1)
     let l:filespec = s:GetMessageFilespec(l:index, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
 	return
     endif
 
-    execute 'keepalt pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(bufnr(''), &l:filetype), ' \') escapings#fnameescape(l:filespec)
+    execute 'keepalt pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), ' \') escapings#fnameescape(l:filespec)
 endfunction
 
-function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec )
+function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, targetBufNr )
     if exists('b:MessageRecall_ChangedTick') && b:MessageRecall_ChangedTick == b:changedtick
 	call EditSimilar#Next#Open(
 	\   'MessageRecall!',
@@ -183,7 +188,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec )
 
 	execute 'MessageRecall!' escapings#fnameescape(l:filespec)
     else
-	call MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec)
+	call MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:targetBufNr)
     endif
 endfunction
 
