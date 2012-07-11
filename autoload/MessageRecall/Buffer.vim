@@ -16,8 +16,11 @@
 " REVISION	DATE		REMARKS
 "   1.01.004	12-Jul-2012	BUG: ingointegration#GetRange() can throw E486,
 "				causing a script error when replacing a
-"				non-matching commit message buffer. Just
-"				:silent! the invocation.
+"				non-matching commit message buffer; :silent! the
+"				invocation. Likewise, the replacement of the
+"				message can fail, too. We need the
+"				a:options.whenRangeNoMatch value to properly
+"				react to that.
 "   1.00.003	19-Jun-2012	Fix syntax error in
 "				MessageRecall#Buffer#Complete().
 "				Extract mapping and command setup to
@@ -103,7 +106,7 @@ function! s:GetMessageFilespec( index, filespec, messageStoreDirspec )
 
     return l:filespec
 endfunction
-function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range )
+function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range, whenRangeNoMatch )
     let l:filespec = s:GetMessageFilespec(-1 * a:count, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
 	return
@@ -114,9 +117,25 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
     let l:isReplace = a:isReplace
     silent! let l:isReplace = l:isReplace || ingointegration#GetRange(l:range) =~# '^\n*$'
     if l:isReplace
-	silent execute l:range 'delete _'
-	let b:MessageRecall_Filename = fnamemodify(l:filespec, ':t')
-	let l:insertPoint = '0'
+	try
+	    silent execute l:range . 'delete _'
+	    let b:MessageRecall_Filename = fnamemodify(l:filespec, ':t')
+	    let l:insertPoint = '0'
+	catch /^Vim\%((\a\+)\)\=:E/
+	    if a:whenRangeNoMatch ==# 'error'
+		call s:ErrorMsg('MessageRecall: Failed to capture message: ' . substitute(v:exception, '^Vim\%((\a\+)\)\=:', '', ''))
+		return
+	    elseif a:whenRangeNoMatch ==# 'ignore'
+		" Append instead of replacing.
+	    elseif a:whenRangeNoMatch ==# 'all'
+		" Replace the entire buffer instead.
+		silent %delete _
+		let b:MessageRecall_Filename = fnamemodify(l:filespec, ':t')
+		let l:insertPoint = '0'
+	    else
+		throw 'ASSERT: Invalid value for a:whenRangeNoMatch: ' . string(a:whenRangeNoMatch)
+	    endif
+	endtry
     endif
 
     execute 'keepalt' l:insertPoint . 'read' escapings#fnameescape(l:filespec)
