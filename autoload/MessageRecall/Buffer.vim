@@ -14,6 +14,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.01.004	12-Jul-2012	BUG: ingointegration#GetRange() can throw E486,
+"				causing a script error when replacing a
+"				non-matching commit message buffer. Just
+"				:silent! the invocation.
 "   1.00.003	19-Jun-2012	Fix syntax error in
 "				MessageRecall#Buffer#Complete().
 "				Extract mapping and command setup to
@@ -107,7 +111,9 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 
     let l:range = (empty(a:range) ? '%' : a:range)
     let l:insertPoint = ''
-    if a:isReplace || ingointegration#GetRange(l:range) =~# '^\n*$'
+    let l:isReplace = a:isReplace
+    silent! let l:isReplace = l:isReplace || ingointegration#GetRange(l:range) =~# '^\n*$'
+    if l:isReplace
 	silent execute l:range 'delete _'
 	let b:MessageRecall_Filename = fnamemodify(l:filespec, ':t')
 	let l:insertPoint = '0'
