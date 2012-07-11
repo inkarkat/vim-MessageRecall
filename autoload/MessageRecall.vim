@@ -12,6 +12,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.006	24-Jun-2012	Change filename template from "message" to the
+"				shorter "msg"; it's just as descriptive, and
+"				shortness is helpful when typing and completing
+"				filenames.
 "   1.00.005	20-Jun-2012	Change API to pass optional a:options, like
 "				BufferPersist does. Right now all options are
 "				forwarded to it, anyway.
@@ -30,8 +34,8 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-let s:messageFilenameTemplate = 'message-%Y%m%d_%H%M%S'
-let s:messageFilenameGlob = 'message-*'
+let s:messageFilenameTemplate = 'msg-%Y%m%d_%H%M%S'
+let s:messageFilenameGlob = 'msg-*'
 function! MessageRecall#Glob()
     return s:messageFilenameGlob
 endfunction
