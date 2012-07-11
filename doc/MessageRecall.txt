@@ -23,9 +23,11 @@ edited message. This way, you automatically collect a history of (committed or
 aborted) past messages, and can quickly base your current message on contents
 recalled from that history.
 
-HOW IT WORKS								     *
-
 SEE ALSO								     *
+
+This plugin is used by:
+VcsMessageRecall (vimscript #4117): Browse and re-insert previous VCS commit
+				    messages.
 
 RELATED WORKS								     *
 
@@ -36,13 +38,13 @@ The plugin is completely inactive until you set it up for a particular
 buffer through the following function; you'll find the details directly in the
 .vim/autoload/MessageRecall.vim implementation file.
 
-MessageRecall#Setup( messageStoreDirspec, range )
+MessageRecall#Setup( messageStoreDirspec, ... )
 
 
 INSIDE THE CURRENT MESSAGE BUFFER					     *
 						 *MessageRecall-message-usage*
-After the setup, the following mappings and commands are available in the
-current message buffer:
+After setup, the following mappings and commands are available in the current
+message buffer:
 
 CTRL-P, CTRL-N		When the buffer has no unsaved changes: Replace the
 			edited message with a [count]'th previous / next
@@ -69,10 +71,10 @@ CTRL-P, CTRL-N		When the buffer has no unsaved changes: Replace the
 			below the current line.
 
 			When the existing message consists of just empty
-			lines (from the message template), the inserted
-			message replaces those empty lines.
-			With [!]: Replace an existing message with the
-			inserted one.
+			lines (originating from the message template that the
+			tool invoking Vim has put there), the inserted message
+			replaces those empty lines. With [!]: Replace an
+			existing message with the inserted one.
 
 
 INSIDE A MESSAGE PREVIEW WINDOW						     *
@@ -81,7 +83,7 @@ CTRL-P, CTRL-N		Go to the previous / next stored message.
 
 :MessageRecall		Insert the previewed stored message below the current
 			line in the buffer from which the message preview was
-			started.
+			opened.
 
 ==============================================================================
 INSTALLATION					  *MessageRecall-installation*
@@ -98,7 +100,7 @@ DEPENDENCIES					  *MessageRecall-dependencies*
 
 - Requires Vim 7.0 or higher.
 - Requires the EditSimilar plugin (vimscript #2544), version 2.00 or higher.
-- Requires the BufferPersist plugin (vimscript #0000).
+- Requires the BufferPersist plugin (vimscript #4115).
 
 ==============================================================================
 CONFIGURATION					 *MessageRecall-configuration*
@@ -126,7 +128,7 @@ IDEAS							 *MessageRecall-ideas*
 ==============================================================================
 HISTORY						       *MessageRecall-history*
 
-1.00	18-Jun-2012
+1.00	25-Jun-2012
 First published version.
 
 0.01	09-Jun-2012
