@@ -12,6 +12,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.01.003	12-Jul-2012	The :MessageRecall command in the message buffer
+"				needs access to the a:whenRangeNoMatch option.
 "   1.00.006	24-Jun-2012	Change filename template from "message" to the
 "				shorter "msg"; it's just as descriptive, and
 "				shortness is helpful when typing and completing
@@ -132,6 +134,7 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
 "				"ignore": the buffer contents silently are not
 "				persisted
 "				"all": the entire buffer is persisted instead
+"				Default is "error"
 "* RETURN VALUES:
 "   None.
 "******************************************************************************
@@ -147,7 +150,8 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
     call BufferPersist#Setup(l:MessageStoreFuncref, l:options)
 
     let l:range = get(l:options, 'range', '')
-    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, l:range, l:CompleteFuncref)
+    let l:whenRangeNoMatch = get(l:options, 'whenRangeNoMatch', 'error')
+    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, l:range, l:whenRangeNoMatch, l:CompleteFuncref)
     call s:SetupAutocmds(l:messageStoreDirspec)
 endfunction
 
