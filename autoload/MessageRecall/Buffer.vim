@@ -21,6 +21,8 @@
 "				message can fail, too. We need the
 "				a:options.whenRangeNoMatch value to properly
 "				react to that.
+"				Improve message about limited number of stored
+"				messages for 0 and 1 occurrences.
 "   1.00.003	19-Jun-2012	Fix syntax error in
 "				MessageRecall#Buffer#Complete().
 "				Extract mapping and command setup to
@@ -77,7 +79,11 @@ function! s:GetIndexedMessageFile( messageStoreDirspec, index )
     let l:files = split(glob(ingofile#CombineToFilespec(a:messageStoreDirspec, MessageRecall#Glob())), "\n")
     let l:filespec = get(l:files, a:index, '')
     if empty(l:filespec)
-	let v:errmsg = printf('Only %d messages available', len(l:files))
+	if len(l:files) == 0
+	    let v:errmsg = 'No messages available'
+	else
+	    let v:errmsg = printf('Only %d message%s available', len(l:files), (len(l:files) == 1 ? '' : 's'))
+	endif
 	echohl ErrorMsg
 	echomsg v:errmsg
 	echohl None
