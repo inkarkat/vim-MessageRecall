@@ -1,0 +1,7 @@
+autoload/escapings.vim
+autoload/ingofile.vim
+autoload/ingointegration.vim
+autoload/MessageRecall.vim
+autoload/MessageRecall/Buffer.vim
+autoload/MessageRecall/MappingsAndCommands.vim
+doc/MessageRecall.txt
