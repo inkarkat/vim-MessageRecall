@@ -2,18 +2,19 @@
 "
 " DEPENDENCIES:
 "   - escapings.vim autoload script
-"   - ingofile.vim autoload script
+"   - ingo/fs/path.vim autoload script
 "   - ingointegration.vim autoload script
 "   - EditSimilar/Next.vim autoload script
 "   - MessageRecall.vim autoload script
 "   - MessageRecall/MappingsAndCommands.vim autoload script
 "
-" Copyright: (C) 2012 Ingo Karkat
+" Copyright: (C) 2012-2013 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.02.005	01-Jun-2013	Move ingofile.vim into ingo-library.
 "   1.01.004	12-Jul-2012	BUG: ingointegration#GetRange() can throw E486,
 "				causing a script error when replacing a
 "				non-matching commit message buffer; :silent! the
@@ -46,14 +47,14 @@ set cpo&vim
 function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     " Complete first files from a:messageStoreDirspec for the {filename} argument,
     " then any path- and filespec from the CWD for {filespec}.
-    let l:messageStoreDirspecPrefix = glob(ingofile#CombineToFilespec(a:messageStoreDirspec, ''))
-    let l:isInMessageStoreDir = (ingofile#CombineToFilespec(getcwd(), '') ==# l:messageStoreDirspecPrefix)
+    let l:messageStoreDirspecPrefix = glob(ingo#fs#path#Combine(a:messageStoreDirspec, ''))
+    let l:isInMessageStoreDir = (ingo#fs#path#Combine(getcwd(), '') ==# l:messageStoreDirspecPrefix)
     return
     \   map(
     \       reverse(
     \           map(
     \               split(
-    \                   glob(ingofile#CombineToFilespec(a:messageStoreDirspec, a:ArgLead . '*')),
+    \                   glob(ingo#fs#path#Combine(a:messageStoreDirspec, a:ArgLead . '*')),
     \                   "\n"
     \               ),
     \               'strpart(v:val, len(l:messageStoreDirspecPrefix))'
@@ -66,17 +67,17 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \                   "\n"
     \               ),
     \               'l:isInMessageStoreDir ?' .
-    \	                'ingofile#CombineToFilespec(fnamemodify(v:val, ":p:h"), "") !=# l:messageStoreDirspecPrefix :' .
+    \	                'ingo#fs#path#Combine(fnamemodify(v:val, ":p:h"), "") !=# l:messageStoreDirspecPrefix :' .
     \	                '1'
     \           ),
-    \           'isdirectory(v:val) ? ingofile#CombineToFilespec(v:val, "") : v:val'
+    \           'isdirectory(v:val) ? ingo#fs#path#Combine(v:val, "") : v:val'
     \       ),
     \       'escapings#fnameescape(v:val)'
     \   )
 endfunction
 
 function! s:GetIndexedMessageFile( messageStoreDirspec, index )
-    let l:files = split(glob(ingofile#CombineToFilespec(a:messageStoreDirspec, MessageRecall#Glob())), "\n")
+    let l:files = split(glob(ingo#fs#path#Combine(a:messageStoreDirspec, MessageRecall#Glob())), "\n")
     let l:filespec = get(l:files, a:index, '')
     if empty(l:filespec)
 	if len(l:files) == 0
@@ -98,7 +99,7 @@ function! s:GetMessageFilespec( index, filespec, messageStoreDirspec )
 	if filereadable(a:filespec)
 	    let l:filespec = a:filespec
 	else
-	    let l:filespec = ingofile#CombineToFilespec(a:messageStoreDirspec, a:filespec)
+	    let l:filespec = ingo#fs#path#Combine(a:messageStoreDirspec, a:filespec)
 	    if ! filereadable(l:filespec)
 		let l:filespec = ''
 
@@ -206,7 +207,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	call EditSimilar#Next#Open(
 	\   'MessageRecall!',
 	\   0,
-	\   ingofile#CombineToFilespec(a:messageStoreDirspec, b:MessageRecall_Filename),
+	\   ingo#fs#path#Combine(a:messageStoreDirspec, b:MessageRecall_Filename),
 	\   a:count,
 	\   (a:isPrevious ? -1 : 1),
 	\   MessageRecall#Glob()
