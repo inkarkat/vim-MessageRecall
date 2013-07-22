@@ -3,6 +3,7 @@
 " DEPENDENCIES:
 "   - escapings.vim autoload script
 "   - ingo/fs/path.vim autoload script
+"   - ingo/msg.vim autoload script
 "   - ingointegration.vim autoload script
 "   - EditSimilar/Next.vim autoload script
 "   - MessageRecall.vim autoload script
@@ -14,6 +15,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.02.006	14-Jun-2013	Use ingo/msg.vim.
 "   1.02.005	01-Jun-2013	Move ingofile.vim into ingo-library.
 "   1.01.004	12-Jul-2012	BUG: ingointegration#GetRange() can throw E486,
 "				causing a script error when replacing a
@@ -81,13 +83,10 @@ function! s:GetIndexedMessageFile( messageStoreDirspec, index )
     let l:filespec = get(l:files, a:index, '')
     if empty(l:filespec)
 	if len(l:files) == 0
-	    let v:errmsg = 'No messages available'
+	    call ingo#msg#ErrorMsg('No messages available')
 	else
-	    let v:errmsg = printf('Only %d message%s available', len(l:files), (len(l:files) == 1 ? '' : 's'))
+	    call ingo#msg#ErrorMsg(printf('Only %d message%s available', len(l:files), (len(l:files) == 1 ? '' : 's')))
 	endif
-	echohl ErrorMsg
-	echomsg v:errmsg
-	echohl None
     endif
 
     return l:filespec
@@ -103,10 +102,7 @@ function! s:GetMessageFilespec( index, filespec, messageStoreDirspec )
 	    if ! filereadable(l:filespec)
 		let l:filespec = ''
 
-		let v:errmsg = 'The stored message does not exist: ' . a:filespec
-		echohl ErrorMsg
-		echomsg v:errmsg
-		echohl None
+		call ingo#msg#ErrorMsg('The stored message does not exist: ' . a:filespec)
 	    endif
 	endif
     endif
@@ -130,7 +126,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 	    let l:insertPoint = '0'
 	catch /^Vim\%((\a\+)\)\=:E/
 	    if a:whenRangeNoMatch ==# 'error'
-		call s:ErrorMsg('MessageRecall: Failed to capture message: ' . substitute(v:exception, '^Vim\%((\a\+)\)\=:', '', ''))
+		call ingo#msg#ErrorMsg('MessageRecall: Failed to capture message: ' . ingo#msg#MsgFromVimException())
 		return
 	    elseif a:whenRangeNoMatch ==# 'ignore'
 		" Append instead of replacing.
@@ -174,11 +170,7 @@ function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
     endif
 
     if l:winNr == -1
-	let v:errmsg = 'No target message buffer opened'
-	echohl ErrorMsg
-	echomsg v:errmsg
-	echohl None
-
+	call ingo#msg#ErrorMsg('No target message buffer opened')
 	return
     endif
 
