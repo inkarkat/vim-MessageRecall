@@ -15,6 +15,13 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.02.008	05-Aug-2013	Factor out s:GetRange() and s:IsReplace() from
+"				MessageRecall#Buffer#Recall().
+"				CHG: Only replace on <C-p> / <C-n> in the
+"				message buffer when the considered range is just
+"				empty lines. I came to dislike the previous
+"				replacement also when the message had been
+"				persisted.
 "   1.02.007	23-Jul-2013	Move ingointegration#GetRange() to
 "				ingo#range#Get().
 "   1.02.006	14-Jun-2013	Use ingo/msg.vim.
@@ -111,17 +118,29 @@ function! s:GetMessageFilespec( index, filespec, messageStoreDirspec )
 
     return l:filespec
 endfunction
+function! s:GetRange( range )
+    return (empty(a:range) ? '%' : a:range)
+endfunction
+function! s:IsReplace( range, whenRangeNoMatch )
+    let l:isReplace = 0
+    try
+	let l:isReplace = (ingo#range#Get(a:range) =~# '^\n*$')
+    catch /^Vim\%((\a\+)\)\=:E/
+	if a:whenRangeNoMatch ==# 'all'
+	    let l:isReplace = (ingo#range#Get('%') =~# '^\n*$')
+	endif
+    endtry
+    return l:isReplace
+endfunction
 function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range, whenRangeNoMatch )
     let l:filespec = s:GetMessageFilespec(-1 * a:count, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
 	return
     endif
 
-    let l:range = (empty(a:range) ? '%' : a:range)
+    let l:range = s:GetRange(a:range)
     let l:insertPoint = ''
-    let l:isReplace = a:isReplace
-    silent! let l:isReplace = l:isReplace || ingo#range#Get(l:range) =~# '^\n*$'
-    if l:isReplace
+    if a:isReplace || s:IsReplace(l:range, a:whenRangeNoMatch)
 	try
 	    silent execute l:range . 'delete _'
 	    let b:MessageRecall_Filename = fnamemodify(l:filespec, ':t')
@@ -196,7 +215,7 @@ function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStor
     execute 'keepalt pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), ' \') escapings#fnameescape(l:filespec)
 endfunction
 
-function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, targetBufNr )
+function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, targetBufNr )
     if exists('b:MessageRecall_ChangedTick') && b:MessageRecall_ChangedTick == b:changedtick
 	call EditSimilar#Next#Open(
 	\   'MessageRecall!',
@@ -206,7 +225,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	\   (a:isPrevious ? -1 : 1),
 	\   MessageRecall#Glob()
 	\)
-    elseif ! &l:modified
+    elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch)
 	let l:filespec = s:GetIndexedMessageFile(a:messageStoreDirspec, a:isPrevious ? (-1 * a:count) : (a:count - 1))
 	if empty(l:filespec)
 	    return
