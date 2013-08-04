@@ -11,6 +11,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.01.003	12-Jul-2012	The :MessageRecall command in the message buffer
+"				needs access to the a:whenRangeNoMatch option.
 "   1.00.002	19-Jun-2012	Define :MessageView command in preview buffer,
 "				too, as a more discoverable alternative to
 "				CTRL-P / CTRL-N navigation.
@@ -32,11 +34,11 @@ function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype 
     execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1,  1, MessageRecall#Glob())<CR>', string(l:command))
 endfunction
 
-function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirspec, range, CompleteFuncref )
+function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirspec, range, whenRangeNoMatch, CompleteFuncref )
     let l:targetBufNr = bufnr('')
 
-    execute printf('command! -buffer -bang -count=1 -nargs=? -complete=customlist,%s MessageRecall  call MessageRecall#Buffer#Recall(<bang>0, <count>, <q-args>, %s, %s)', a:CompleteFuncref, string(a:messageStoreDirspec), string(a:range))
-    execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView call MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d)', a:CompleteFuncref, string(a:messageStoreDirspec), l:targetBufNr)
+    execute printf('command! -buffer -bang -count=1 -nargs=? -complete=customlist,%s MessageRecall  call MessageRecall#Buffer#Recall(<bang>0, <count>, <q-args>, %s, %s, %s)', a:CompleteFuncref, string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch))
+    execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView    call MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d)', a:CompleteFuncref, string(a:messageStoreDirspec), l:targetBufNr)
 
     execute printf('nnoremap <silent> <buffer> <C-p> :<C-u>call MessageRecall#Buffer#Replace(1, v:count1, %s, %d)<CR>', string(a:messageStoreDirspec), l:targetBufNr)
     execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call MessageRecall#Buffer#Replace(0, v:count1, %s, %d)<CR>', string(a:messageStoreDirspec), l:targetBufNr)
