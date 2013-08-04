@@ -5,6 +5,7 @@
 "   - ingo/fs/path.vim autoload script
 "   - ingo/msg.vim autoload script
 "   - ingo/range.vim autoload script
+"   - ingo/window/preview.vim autoload script
 "   - EditSimilar/Next.vim autoload script
 "   - MessageRecall.vim autoload script
 "   - MessageRecall/MappingsAndCommands.vim autoload script
@@ -26,6 +27,15 @@
 "				that do not start at the beginning of the
 "				buffer. Must insert before the current line
 "				then, not always line 0.
+"				CHG: On <C-p> / <C-n> in the original message
+"				buffer: When the buffer is modified and a stored
+"				message is already being previewed, change the
+"				semantics of count to be interpreted relative to
+"				the currently previewed stored message.
+"				Beforehand, one had to use increasing <C-p>,
+"				2<C-p>, 3<C-p>, etc. to iterate through stored
+"				messages (or go to the preview window and invoke
+"				the mapping there).
 "   1.02.007	23-Jul-2013	Move ingointegration#GetRange() to
 "				ingo#range#Get().
 "   1.02.006	14-Jun-2013	Use ingo/msg.vim.
@@ -239,7 +249,19 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 
 	execute 'MessageRecall!' escapings#fnameescape(l:filespec)
     else
-	call MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:targetBufNr)
+	let l:previewWinNr = ingo#window#preview#IsPreviewWindowVisible()
+	if ! l:previewWinNr || ! getbufvar(winbufnr(l:previewWinNr), 'MessageRecall_Buffer')
+	    " No stored message previewed yet: Open the a:count'th previous /
+	    " first stored message in the preview window.
+	    call MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:targetBufNr)
+	else
+	    " DWIM: The semantics of a:count are interpreted relative to the currently previewed stored message.
+	    let l:filetype = &l:filetype
+	    execute l:previewWinNr . 'wincmd w'
+	    call EditSimilar#Next#Open('view', 0, expand("%:p"), a:count, (a:isPrevious ? -1 : 1), MessageRecall#Glob())
+	    execute MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, l:filetype)
+	    wincmd p
+	endif
     endif
 endfunction
 
