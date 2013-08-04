@@ -22,6 +22,10 @@
 "				empty lines. I came to dislike the previous
 "				replacement also when the message had been
 "				persisted.
+"				Minor: Correctly handle replacement of ranges
+"				that do not start at the beginning of the
+"				buffer. Must insert before the current line
+"				then, not always line 0.
 "   1.02.007	23-Jul-2013	Move ingointegration#GetRange() to
 "				ingo#range#Get().
 "   1.02.006	14-Jun-2013	Use ingo/msg.vim.
@@ -139,12 +143,14 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
     endif
 
     let l:range = s:GetRange(a:range)
-    let l:insertPoint = ''
+    let l:insertPoint = '.'
     if a:isReplace || s:IsReplace(l:range, a:whenRangeNoMatch)
 	try
 	    silent execute l:range . 'delete _'
 	    let b:MessageRecall_Filename = fnamemodify(l:filespec, ':t')
-	    let l:insertPoint = '0'
+	    " After the deletion, the cursor is on the following line. Prepend
+	    " before that.
+	    let l:insertPoint = line('.') - 1
 	catch /^Vim\%((\a\+)\)\=:E/
 	    if a:whenRangeNoMatch ==# 'error'
 		call ingo#msg#ErrorMsg('MessageRecall: Failed to capture message: ' . ingo#msg#MsgFromVimException())
@@ -164,7 +170,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 
     execute 'keepalt' l:insertPoint . 'read' escapings#fnameescape(l:filespec)
 
-    if l:insertPoint ==# '0'
+    if l:insertPoint !=# '.'
 	let b:MessageRecall_ChangedTick = b:changedtick
     endif
 endfunction
