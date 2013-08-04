@@ -4,7 +4,7 @@
 "   - escapings.vim autoload script
 "   - ingo/fs/path.vim autoload script
 "   - ingo/msg.vim autoload script
-"   - ingointegration.vim autoload script
+"   - ingo/range.vim autoload script
 "   - EditSimilar/Next.vim autoload script
 "   - MessageRecall.vim autoload script
 "   - MessageRecall/MappingsAndCommands.vim autoload script
@@ -15,6 +15,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.02.007	23-Jul-2013	Move ingointegration#GetRange() to
+"				ingo#range#Get().
 "   1.02.006	14-Jun-2013	Use ingo/msg.vim.
 "   1.02.005	01-Jun-2013	Move ingofile.vim into ingo-library.
 "   1.01.004	12-Jul-2012	BUG: ingointegration#GetRange() can throw E486,
@@ -118,7 +120,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
     let l:range = (empty(a:range) ? '%' : a:range)
     let l:insertPoint = ''
     let l:isReplace = a:isReplace
-    silent! let l:isReplace = l:isReplace || ingointegration#GetRange(l:range) =~# '^\n*$'
+    silent! let l:isReplace = l:isReplace || ingo#range#Get(l:range) =~# '^\n*$'
     if l:isReplace
 	try
 	    silent execute l:range . 'delete _'
