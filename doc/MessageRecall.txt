@@ -99,7 +99,7 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES					  *MessageRecall-dependencies*
 
 - Requires Vim 7.0 or higher.
-- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.007 or
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.011 or
   higher.
 - Requires the EditSimilar plugin (vimscript #2544), version 2.00 or higher.
 - Requires the BufferPersist plugin (vimscript #4115).
@@ -143,7 +143,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012 Ingo Karkat
+Copyright: (C) 2012-2013 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
