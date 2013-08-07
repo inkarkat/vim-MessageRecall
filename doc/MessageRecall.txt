@@ -51,6 +51,9 @@ CTRL-P, CTRL-N		When the buffer has no unsaved changes: Replace the
 			stored message.
 			When the buffer is modified: Open the [count]'th
 			previous / first stored message in the preview window.
+			When the buffer is modified and a stored message is
+			already being previewed: Open the [count]'th previous
+			/ next stored message there.
 
 								*:MessageView*
 :[count]MessageView
@@ -131,6 +134,15 @@ IDEAS							 *MessageRecall-ideas*
 HISTORY						       *MessageRecall-history*
 
 1.02	RELEASEME
+- CHG: Only replace on <C-p> / <C-n> in the message buffer when the considered
+  range is just empty lines. I came to dislike the previous replacement also
+  when the message had been persisted.
+- CHG: On <C-p> / <C-n> in the original message buffer: When the buffer is
+  modified and a stored message is already being previewed, change the
+  semantics of count to be interpreted relative to the currently previewed
+  stored message. Beforehand, one had to use increasing <C-p>, 2<C-p>, 3<C-p>,
+  etc. to iterate through stored messages (or go to the preview window and
+  invoke the mapping there).
 - Add dependency to ingo-library (vimscript #4433).
 
 1.01	12-Jul-2012
