@@ -250,17 +250,16 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	execute 'MessageRecall!' escapings#fnameescape(l:filespec)
     else
 	let l:previewWinNr = ingo#window#preview#IsPreviewWindowVisible()
-	if ! l:previewWinNr || ! getbufvar(winbufnr(l:previewWinNr), 'MessageRecall_Buffer')
+	let l:previewBufNr = winbufnr(l:previewWinNr)
+	if ! l:previewWinNr || ! getbufvar(l:previewBufNr, 'MessageRecall_Buffer')
 	    " No stored message previewed yet: Open the a:count'th previous /
 	    " first stored message in the preview window.
 	    call MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:targetBufNr)
 	else
 	    " DWIM: The semantics of a:count are interpreted relative to the currently previewed stored message.
-	    let l:filetype = &l:filetype
-	    execute l:previewWinNr . 'wincmd w'
-	    call EditSimilar#Next#Open('view', 0, expand("%:p"), a:count, (a:isPrevious ? -1 : 1), MessageRecall#Glob())
-	    execute MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, l:filetype)
-	    wincmd p
+	    let l:filespec = fnamemodify(bufname(l:previewBufNr), ':p')
+	    let l:command = 'pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), ' \')
+	    call EditSimilar#Next#Open(l:command, 0, l:filespec, a:count, (a:isPrevious ? -1 : 1), MessageRecall#Glob())
 	endif
     endif
 endfunction
