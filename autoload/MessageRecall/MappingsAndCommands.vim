@@ -2,6 +2,7 @@
 "
 " DEPENDENCIES:
 "   - EditSimilar/Next.vim autoload script
+"   - ingo/escape/command.vim autoload script
 "   - MessageRecall.vim autoload script
 "   - MessageRecall/Buffer.vim autoload script
 "
@@ -11,6 +12,11 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.02.005	09-Aug-2013	Allow to change / disable the defined mappings
+"				by using intermediate <Plug>-mappings. This also
+"				prevents escaping issues with my buffer-local
+"				UniversalIteratorMapping iteration mode.
+"				Use ingo#escape#command#mapescape().
 "   1.02.004	05-Aug-2013	Pass range and whenRangeNoMatch options to the
 "				<C-p> / <C-n> mappings, too.
 "				Mark previewed stored messages with
@@ -34,9 +40,15 @@ function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype 
     execute printf('command! -buffer -bang MessageRecall call MessageRecall#Buffer#PreviewRecall(<q-bang>, %d)', a:targetBufNr)
     execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView call MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d)', MessageRecall#GetFuncrefs(l:messageStoreDirspec)[1], string(l:messageStoreDirspec), a:targetBufNr)
 
-    let l:command = 'view +' . substitute(escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, a:filetype), ' \'), '|', '<Bar>', 'g')
-    execute printf('nnoremap <silent> <buffer> <C-p> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1, -1, MessageRecall#Glob())<CR>', string(l:command))
-    execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1,  1, MessageRecall#Glob())<CR>', string(l:command))
+    let l:command = 'view +' . ingo#escape#command#mapescape(escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, a:filetype), ' \'))
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewPrev) :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1, -1, MessageRecall#Glob())<CR>', string(l:command))
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewNext) :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1,  1, MessageRecall#Glob())<CR>', string(l:command))
+    if ! hasmapto('<Plug>(MessageRecallPreviewPrev)', 'n')
+	nmap <buffer> <C-p> <Plug>(MessageRecallPreviewPrev)
+    endif
+    if ! hasmapto('<Plug>(MessageRecallPreviewNext)', 'n')
+	nmap <buffer> <C-n> <Plug>(MessageRecallPreviewNext)
+    endif
 
     let b:MessageRecall_Buffer = 1
 endfunction
@@ -47,8 +59,14 @@ function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirs
     execute printf('command! -buffer -bang -count=1 -nargs=? -complete=customlist,%s MessageRecall  call MessageRecall#Buffer#Recall(<bang>0, <count>, <q-args>, %s, %s, %s)', a:CompleteFuncref, string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch))
     execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView    call MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d)', a:CompleteFuncref, string(a:messageStoreDirspec), l:targetBufNr)
 
-    execute printf('nnoremap <silent> <buffer> <C-p> :<C-u>call MessageRecall#Buffer#Replace(1, v:count1, %s, %s, %s, %d)<CR>', string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch), l:targetBufNr)
-    execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call MessageRecall#Buffer#Replace(0, v:count1, %s, %s, %s, %d)<CR>', string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch), l:targetBufNr)
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallGoPrev) :<C-u>call MessageRecall#Buffer#Replace(1, v:count1, %s, %s, %s, %d)<CR>', string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch), l:targetBufNr)
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallGoNext) :<C-u>call MessageRecall#Buffer#Replace(0, v:count1, %s, %s, %s, %d)<CR>', string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch), l:targetBufNr)
+    if ! hasmapto('<Plug>(MessageRecallGoPrev)', 'n')
+	nmap <buffer> <C-p> <Plug>(MessageRecallGoPrev)
+    endif
+    if ! hasmapto('<Plug>(MessageRecallGoNext)', 'n')
+	nmap <buffer> <C-n> <Plug>(MessageRecallGoNext)
+    endif
 endfunction
 
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
