@@ -13,6 +13,9 @@
 " REVISION	DATE		REMARKS
 "   1.02.004	05-Aug-2013	Pass range and whenRangeNoMatch options to the
 "				<C-p> / <C-n> mappings, too.
+"				Mark previewed stored messages with
+"				b:MessageRecall_Buffer to be able to recognize
+"				them in MessageRecall#Buffer#Replace().
 "   1.01.003	12-Jul-2012	The :MessageRecall command in the message buffer
 "				needs access to the a:whenRangeNoMatch option.
 "   1.00.002	19-Jun-2012	Define :MessageView command in preview buffer,
@@ -34,6 +37,8 @@ function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype 
     let l:command = 'view +' . substitute(escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, a:filetype), ' \'), '|', '<Bar>', 'g')
     execute printf('nnoremap <silent> <buffer> <C-p> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1, -1, MessageRecall#Glob())<CR>', string(l:command))
     execute printf('nnoremap <silent> <buffer> <C-n> :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1,  1, MessageRecall#Glob())<CR>', string(l:command))
+
+    let b:MessageRecall_Buffer = 1
 endfunction
 
 function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirspec, range, whenRangeNoMatch, CompleteFuncref )
