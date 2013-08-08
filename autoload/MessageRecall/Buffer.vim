@@ -1,7 +1,7 @@
 " MessageRecall/Buffer.vim: Functionality for message buffers.
 "
 " DEPENDENCIES:
-"   - escapings.vim autoload script
+"   - ingo/compat.vim autoload script
 "   - ingo/fs/path.vim autoload script
 "   - ingo/msg.vim autoload script
 "   - ingo/range.vim autoload script
@@ -16,6 +16,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.02.009	08-Aug-2013	Move escapings.vim into ingo-library.
 "   1.02.008	05-Aug-2013	Factor out s:GetRange() and s:IsReplace() from
 "				MessageRecall#Buffer#Recall().
 "				CHG: Only replace on <C-p> / <C-n> in the
@@ -97,7 +98,7 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \           ),
     \           'isdirectory(v:val) ? ingo#fs#path#Combine(v:val, "") : v:val'
     \       ),
-    \       'escapings#fnameescape(v:val)'
+    \       'ingo#compat#fnameescape(v:val)'
     \   )
 endfunction
 
@@ -178,7 +179,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 	endtry
     endif
 
-    execute 'keepalt' l:insertPoint . 'read' escapings#fnameescape(l:filespec)
+    execute 'keepalt' l:insertPoint . 'read' ingo#compat#fnameescape(l:filespec)
 
     if l:insertPoint !=# '.'
 	let b:MessageRecall_ChangedTick = b:changedtick
@@ -213,7 +214,7 @@ function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
 
     let l:message = expand('%:t')
     execute l:winNr 'wincmd w'
-    execute 'MessageRecall' . a:bang escapings#fnameescape(l:message)
+    execute 'MessageRecall' . a:bang ingo#compat#fnameescape(l:message)
 endfunction
 function! MessageRecall#Buffer#GetPreviewCommands( targetBufNr, filetype )
     return
@@ -228,7 +229,7 @@ function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStor
 	return
     endif
 
-    execute 'keepalt pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), ' \') escapings#fnameescape(l:filespec)
+    execute 'keepalt pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), ' \') ingo#compat#fnameescape(l:filespec)
 endfunction
 
 function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, targetBufNr )
@@ -247,7 +248,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	    return
 	endif
 
-	execute 'MessageRecall!' escapings#fnameescape(l:filespec)
+	execute 'MessageRecall!' ingo#compat#fnameescape(l:filespec)
     else
 	let l:previewWinNr = ingo#window#preview#IsPreviewWindowVisible()
 	let l:previewBufNr = winbufnr(l:previewWinNr)
