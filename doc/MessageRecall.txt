@@ -110,6 +110,22 @@ DEPENDENCIES					  *MessageRecall-dependencies*
 ==============================================================================
 CONFIGURATION					 *MessageRecall-configuration*
 
+For a permanent configuration, put the following commands into your |vimrc|:
+							 *MessageRecall-remap*
+If you want to use different mappings, first disable the default key mappings
+in your |vimrc|: >
+    map <Plug>DisableMessageRecallPreviewPrev <Plug>(MessageRecallPreviewPrev)
+    map <Plug>DisableMessageRecallPreviewNext <Plug>(MessageRecallPreviewNext)
+    map <Plug>DisableMessageRecallGoPrev      <Plug>(MessageRecallGoPrev)
+    map <Plug>DisableMessageRecallGoNext      <Plug>(MessageRecallGoNext)
+Since there's no common filetype for this plugin, |User| events are fired for
+each message buffer. You can hook into these events to define alternative
+mappings: >
+    autocmd User MessageRecallBuffer  map <buffer> <Leader>P <Plug>(MessageRecallGoPrev)
+    autocmd User MessageRecallBuffer  map <buffer> <Leader>N <Plug>(MessageRecallGoNext)
+    autocmd User MessageRecallPreview map <buffer> <Leader>P <Plug>(MessageRecallPreviewPrev)
+    autocmd User MessageRecallPreview map <buffer> <Leader>N <Plug>(MessageRecallPreviewNext)
+<
 ==============================================================================
 INTEGRATION					   *MessageRecall-integration*
 
@@ -143,6 +159,7 @@ HISTORY						       *MessageRecall-history*
   stored message. Beforehand, one had to use increasing <C-p>, 2<C-p>, 3<C-p>,
   etc. to iterate through stored messages (or go to the preview window and
   invoke the mapping there).
+- ENH: Allow to override the default <C-p> / <C-n> mappings.
 - Add dependency to ingo-library (vimscript #4433).
 
 1.01	12-Jul-2012
