@@ -17,6 +17,9 @@
 "				prevents escaping issues with my buffer-local
 "				UniversalIteratorMapping iteration mode.
 "				Use ingo#escape#command#mapescape().
+"				Trigger User autocmds, e.g. to allow to easily
+"				define alternative mappings for <C-p> / <C-n>,
+"				as there's no fixed filetype one could use here.
 "   1.02.004	05-Aug-2013	Pass range and whenRangeNoMatch options to the
 "				<C-p> / <C-n> mappings, too.
 "				Mark previewed stored messages with
@@ -51,6 +54,12 @@ function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype 
     endif
 
     let b:MessageRecall_Buffer = 1
+
+    if v:version == 703 && has('patch438') || v:version > 703
+	silent doautocmd <nomodeline> User MessageRecallPreview
+    else
+	silent doautocmd              User MessageRecallPreview
+    endif
 endfunction
 
 function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirspec, range, whenRangeNoMatch, CompleteFuncref )
@@ -66,6 +75,12 @@ function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirs
     endif
     if ! hasmapto('<Plug>(MessageRecallGoNext)', 'n')
 	nmap <buffer> <C-n> <Plug>(MessageRecallGoNext)
+    endif
+
+    if v:version == 703 && has('patch438') || v:version > 703
+	silent doautocmd <nomodeline> User MessageRecallBuffer
+    else
+	silent doautocmd              User MessageRecallBuffer
     endif
 endfunction
 
