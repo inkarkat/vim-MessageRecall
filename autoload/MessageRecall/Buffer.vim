@@ -16,6 +16,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.02.010	09-Aug-2013	FIX: Must use String comparison.
 "   1.02.009	08-Aug-2013	Move escapings.vim into ingo-library.
 "   1.02.008	05-Aug-2013	Factor out s:GetRange() and s:IsReplace() from
 "				MessageRecall#Buffer#Recall().
@@ -181,7 +182,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 
     execute 'keepalt' l:insertPoint . 'read' ingo#compat#fnameescape(l:filespec)
 
-    if l:insertPoint !=# '.'
+    if ('' . l:insertPoint) !=# '.'
 	let b:MessageRecall_ChangedTick = b:changedtick
     endif
 endfunction
@@ -234,6 +235,7 @@ endfunction
 
 function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, targetBufNr )
     if exists('b:MessageRecall_ChangedTick') && b:MessageRecall_ChangedTick == b:changedtick
+	" Replace again in the original message buffer.
 	call EditSimilar#Next#Open(
 	\   'MessageRecall!',
 	\   0,
@@ -243,6 +245,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	\   MessageRecall#Glob()
 	\)
     elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch)
+	" Replace for the first time in the original message buffer.
 	let l:filespec = s:GetIndexedMessageFile(a:messageStoreDirspec, a:isPrevious ? (-1 * a:count) : (a:count - 1))
 	if empty(l:filespec)
 	    return
@@ -250,6 +253,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 
 	execute 'MessageRecall!' ingo#compat#fnameescape(l:filespec)
     else
+	" Show in preview window.
 	let l:previewWinNr = ingo#window#preview#IsPreviewWindowVisible()
 	let l:previewBufNr = winbufnr(l:previewWinNr)
 	if ! l:previewWinNr || ! getbufvar(l:previewBufNr, 'MessageRecall_Buffer')
