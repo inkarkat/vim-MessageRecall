@@ -149,7 +149,7 @@ IDEAS							 *MessageRecall-ideas*
 ==============================================================================
 HISTORY						       *MessageRecall-history*
 
-1.02	RELEASEME
+1.02	21-Nov-2013
 - CHG: Only replace on <C-p> / <C-n> in the message buffer when the considered
   range is just empty lines. I came to dislike the previous replacement also
   when the message had been persisted.
@@ -160,7 +160,8 @@ HISTORY						       *MessageRecall-history*
   etc. to iterate through stored messages (or go to the preview window and
   invoke the mapping there).
 - ENH: Allow to override the default <C-p> / <C-n> mappings.
-- Add dependency to ingo-library (vimscript #4433).
+- Add dependency to ingo-library (vimscript #4433). *** You need to separately
+  install ingo-library (vimscript #4433) version 1.012 (or higher)! ***
 
 1.01	12-Jul-2012
 BUG: Script error E486 when replacing a non-matching commit message buffer.
