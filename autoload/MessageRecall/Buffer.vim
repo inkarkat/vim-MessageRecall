@@ -2,6 +2,7 @@
 "
 " DEPENDENCIES:
 "   - ingo/compat.vim autoload script
+"   - ingo/err.vim autoload script
 "   - ingo/fs/path.vim autoload script
 "   - ingo/msg.vim autoload script
 "   - ingo/range.vim autoload script
@@ -10,12 +11,15 @@
 "   - MessageRecall.vim autoload script
 "   - MessageRecall/MappingsAndCommands.vim autoload script
 "
-" Copyright: (C) 2012-2013 Ingo Karkat
+" Copyright: (C) 2012-2014 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.03.011	01-Apr-2014	Adapt to changed EditSimilar.vim interface that
+"				returns the success status now.
+"				Abort on error for own plugin commands.
 "   1.02.010	09-Aug-2013	FIX: Must use String comparison.
 "   1.02.009	08-Aug-2013	Move escapings.vim into ingo-library.
 "   1.02.008	05-Aug-2013	Factor out s:GetRange() and s:IsReplace() from
@@ -103,14 +107,14 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \   )
 endfunction
 
-function! s:GetIndexedMessageFile( messageStoreDirspec, index )
+function! s:GetIndexedMessageFilespec( messageStoreDirspec, index )
     let l:files = split(glob(ingo#fs#path#Combine(a:messageStoreDirspec, MessageRecall#Glob())), "\n")
     let l:filespec = get(l:files, a:index, '')
     if empty(l:filespec)
 	if len(l:files) == 0
-	    call ingo#msg#ErrorMsg('No messages available')
+	    call ingo#err#Set('No messages available')
 	else
-	    call ingo#msg#ErrorMsg(printf('Only %d message%s available', len(l:files), (len(l:files) == 1 ? '' : 's')))
+	    call ingo#err#Set(printf('Only %d message%s available', len(l:files), (len(l:files) == 1 ? '' : 's')))
 	endif
     endif
 
@@ -118,7 +122,7 @@ function! s:GetIndexedMessageFile( messageStoreDirspec, index )
 endfunction
 function! s:GetMessageFilespec( index, filespec, messageStoreDirspec )
     if empty(a:filespec)
-	let l:filespec = s:GetIndexedMessageFile(a:messageStoreDirspec, a:index)
+	let l:filespec = s:GetIndexedMessageFilespec(a:messageStoreDirspec, a:index)
     else
 	if filereadable(a:filespec)
 	    let l:filespec = a:filespec
@@ -127,7 +131,7 @@ function! s:GetMessageFilespec( index, filespec, messageStoreDirspec )
 	    if ! filereadable(l:filespec)
 		let l:filespec = ''
 
-		call ingo#msg#ErrorMsg('The stored message does not exist: ' . a:filespec)
+		call ingo#err#Set('The stored message does not exist: ' . a:filespec)
 	    endif
 	endif
     endif
@@ -151,7 +155,7 @@ endfunction
 function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range, whenRangeNoMatch )
     let l:filespec = s:GetMessageFilespec(-1 * a:count, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
-	return
+	return 0    " Message has been set by s:GetMessageFilespec().
     endif
 
     let l:range = s:GetRange(a:range)
@@ -165,8 +169,8 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 	    let l:insertPoint = line('.') - 1
 	catch /^Vim\%((\a\+)\)\=:E/
 	    if a:whenRangeNoMatch ==# 'error'
-		call ingo#msg#ErrorMsg('MessageRecall: Failed to capture message: ' . ingo#msg#MsgFromVimException())
-		return
+		call ingo#err#Set('MessageRecall: Failed to capture message: ' . ingo#msg#MsgFromVimException())
+		return 0
 	    elseif a:whenRangeNoMatch ==# 'ignore'
 		" Append instead of replacing.
 	    elseif a:whenRangeNoMatch ==# 'all'
@@ -185,6 +189,8 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
     if ('' . l:insertPoint) !=# '.'
 	let b:MessageRecall_ChangedTick = b:changedtick
     endif
+
+    return 1
 endfunction
 
 function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
@@ -209,13 +215,14 @@ function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
     endif
 
     if l:winNr == -1
-	call ingo#msg#ErrorMsg('No target message buffer opened')
-	return
+	call ingo#err#Set('No target message buffer opened')
+	return 0
     endif
 
     let l:message = expand('%:t')
     execute l:winNr 'wincmd w'
     execute 'MessageRecall' . a:bang ingo#compat#fnameescape(l:message)
+    return 1
 endfunction
 function! MessageRecall#Buffer#GetPreviewCommands( targetBufNr, filetype )
     return
@@ -227,16 +234,17 @@ function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStor
     let l:index = (a:isPrevious ? -1 * a:count : a:count - 1)
     let l:filespec = s:GetMessageFilespec(l:index, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
-	return
+	return 0    " Message has been set by s:GetMessageFilespec().
     endif
 
     execute 'keepalt pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), ' \') ingo#compat#fnameescape(l:filespec)
+    return 1
 endfunction
 
 function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, targetBufNr )
     if exists('b:MessageRecall_ChangedTick') && b:MessageRecall_ChangedTick == b:changedtick
 	" Replace again in the original message buffer.
-	call EditSimilar#Next#Open(
+	return EditSimilar#Next#Open(
 	\   'MessageRecall!',
 	\   0,
 	\   ingo#fs#path#Combine(a:messageStoreDirspec, b:MessageRecall_Filename),
@@ -246,12 +254,13 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	\)
     elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch)
 	" Replace for the first time in the original message buffer.
-	let l:filespec = s:GetIndexedMessageFile(a:messageStoreDirspec, a:isPrevious ? (-1 * a:count) : (a:count - 1))
+	let l:filespec = s:GetIndexedMessageFilespec(a:messageStoreDirspec, a:isPrevious ? (-1 * a:count) : (a:count - 1))
 	if empty(l:filespec)
-	    return
+	    return 0    " Message has been set by s:GetIndexedMessageFilespec().
 	endif
 
 	execute 'MessageRecall!' ingo#compat#fnameescape(l:filespec)
+	return 1
     else
 	" Show in preview window.
 	let l:previewWinNr = ingo#window#preview#IsPreviewWindowVisible()
@@ -259,12 +268,12 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	if ! l:previewWinNr || ! getbufvar(l:previewBufNr, 'MessageRecall_Buffer')
 	    " No stored message previewed yet: Open the a:count'th previous /
 	    " first stored message in the preview window.
-	    call MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:targetBufNr)
+	    return MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:targetBufNr)
 	else
 	    " DWIM: The semantics of a:count are interpreted relative to the currently previewed stored message.
 	    let l:filespec = fnamemodify(bufname(l:previewBufNr), ':p')
 	    let l:command = 'pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), ' \')
-	    call EditSimilar#Next#Open(l:command, 0, l:filespec, a:count, (a:isPrevious ? -1 : 1), MessageRecall#Glob())
+	    return EditSimilar#Next#Open(l:command, 0, l:filespec, a:count, (a:isPrevious ? -1 : 1), MessageRecall#Glob())
 	endif
     endif
 endfunction
