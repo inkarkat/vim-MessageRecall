@@ -104,7 +104,7 @@ DEPENDENCIES					  *MessageRecall-dependencies*
 - Requires Vim 7.0 or higher.
 - Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.012 or
   higher.
-- Requires the EditSimilar plugin (vimscript #2544), version 2.00 or higher.
+- Requires the EditSimilar plugin (vimscript #2544), version 2.40 or higher.
 - Requires the BufferPersist plugin (vimscript #4115).
 
 ==============================================================================
@@ -149,6 +149,11 @@ IDEAS							 *MessageRecall-ideas*
 ==============================================================================
 HISTORY						       *MessageRecall-history*
 
+1.03	RELEASEME
+- Adapt to changed EditSimilar.vim interface that returns the success status
+  now. Abort on error for own plugin commands.
+  *** You need to update to EditSimilar.vim (vimscript #2544) version 2.40! ***
+
 1.02	21-Nov-2013
 - CHG: Only replace on <C-p> / <C-n> in the message buffer when the considered
   range is just empty lines. I came to dislike the previous replacement also
@@ -173,7 +178,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012-2013 Ingo Karkat
+Copyright: (C) 2012-2014 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
