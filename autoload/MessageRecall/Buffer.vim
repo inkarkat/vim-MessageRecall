@@ -221,7 +221,12 @@ function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
 
     let l:message = expand('%:t')
     execute l:winNr 'wincmd w'
-    execute 'MessageRecall' . a:bang ingo#compat#fnameescape(l:message)
+    try
+	execute 'MessageRecall' . a:bang ingo#compat#fnameescape(l:message)
+    catch /^Vim\%((\a\+)\)\=:/
+	call ingo#err#SetVimException()
+	return 0
+    endtry
     return 1
 endfunction
 function! MessageRecall#Buffer#GetPreviewCommands( targetBufNr, filetype )
@@ -259,7 +264,12 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	    return 0    " Message has been set by s:GetIndexedMessageFilespec().
 	endif
 
-	execute 'MessageRecall!' ingo#compat#fnameescape(l:filespec)
+	try
+	    execute 'MessageRecall!' ingo#compat#fnameescape(l:filespec)
+	catch /^Vim\%((\a\+)\)\=:/
+	    call ingo#err#SetVimException()
+	    return 0
+	endtry
 	return 1
     else
 	" Show in preview window.
