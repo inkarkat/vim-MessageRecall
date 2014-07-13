@@ -5,6 +5,7 @@
 "   - ingo/err.vim autoload script
 "   - ingo/fs/path.vim autoload script
 "   - ingo/msg.vim autoload script
+"   - ingo/plugin.vim autoload script
 "   - ingo/range.vim autoload script
 "   - ingo/window/preview.vim autoload script
 "   - EditSimilar/Next.vim autoload script
@@ -17,10 +18,13 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"   1.04.012	14-Jul-2014	ENH: For :MessageRecall command completion,
+"   1.10.012	14-Jul-2014	ENH: For :MessageRecall command completion,
 "				return the messages from other message stores
 "				also in reverse order, so that the latest one
 "				comes first.
+"				Extract s:GlobMessageStores() and allow to
+"				override / extend the message store(s) via
+"				b:MessageRecall_MessageStores.
 "   1.03.011	01-Apr-2014	Adapt to changed EditSimilar.vim interface that
 "				returns the success status now.
 "				Abort on error for own plugin commands.
@@ -79,10 +83,26 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
+function! s:GlobMessageStores( messageStoreDirspec, expr )
+    let l:messageStores = map(
+    \   ingo#plugin#setting#GetBufferLocal('MessageRecall_MessageStores', ['']),
+    \   'empty(v:val) ? a:messageStoreDirspec : v:val'
+    \)
+    return globpath(
+    \   join(
+    \       map(
+    \           l:messageStores,
+    \           'escape(v:val, ",")'
+    \       ),
+    \       ','
+    \   ),
+    \   a:expr
+    \)
+endfunction
 function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     " Complete first files from a:messageStoreDirspec for the {filename} argument,
     " then any path- and filespec from the CWD for {filespec}.
-    let l:messageStoreDirspecPrefix = glob(ingo#fs#path#Combine(a:messageStoreDirspec, ''))
+    let l:messageStoreDirspecPrefix = get(split(s:GlobMessageStores(a:messageStoreDirspec, ''), '\n'), 0, '')
 
     let l:isInMessageStoreDir = (ingo#fs#path#Combine(getcwd(), '') ==# l:messageStoreDirspecPrefix)
     let l:otherPathOrFilespecs =
@@ -106,7 +126,7 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \       reverse(
     \           map(
     \               split(
-    \                   glob(ingo#fs#path#Combine(a:messageStoreDirspec, a:ArgLead . '*')),
+    \                   s:GlobMessageStores(a:messageStoreDirspec, a:ArgLead . '*'),
     \                   "\n"
     \               ),
     \               'strpart(v:val, len(l:messageStoreDirspecPrefix))'
@@ -121,7 +141,7 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
 endfunction
 
 function! s:GetIndexedMessageFilespec( messageStoreDirspec, index )
-    let l:files = split(glob(ingo#fs#path#Combine(a:messageStoreDirspec, MessageRecall#Glob())), "\n")
+    let l:files = split(s:GlobMessageStores(a:messageStoreDirspec, MessageRecall#Glob()), "\n")
     let l:filespec = get(l:files, a:index, '')
     if empty(l:filespec)
 	if len(l:files) == 0
