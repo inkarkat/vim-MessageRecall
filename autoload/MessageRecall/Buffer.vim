@@ -88,7 +88,7 @@ function! s:GlobMessageStores( messageStoreDirspec, expr )
     \   ingo#plugin#setting#GetBufferLocal('MessageRecall_MessageStores', ['']),
     \   'empty(v:val) ? a:messageStoreDirspec : v:val'
     \)
-    return globpath(
+    let l:filespecs = split(globpath(
     \   join(
     \       map(
     \           l:messageStores,
@@ -97,12 +97,28 @@ function! s:GlobMessageStores( messageStoreDirspec, expr )
     \       ','
     \   ),
     \   a:expr
-    \)
+    \), '\n')
+
+    return sort(l:filespecs, 's:SortByMessageFilename')
+endfunction
+function! s:SortByMessageFilename( f1, f2 )
+    if a:f1 ==# a:f2
+	return 0
+    endif
+
+    let l:n1 = fnamemodify(a:f1, ':t')
+    let l:n2 = fnamemodify(a:f2, ':t')
+
+    if l:n1 ==# l:n2
+	return (a:f1 ># a:f2 ? 1 : -1)
+    endif
+
+    return (l:n1 ># l:n2 ? 1 : -1)
 endfunction
 function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     " Complete first files from a:messageStoreDirspec for the {filename} argument,
     " then any path- and filespec from the CWD for {filespec}.
-    let l:messageStoreDirspecPrefix = get(split(s:GlobMessageStores(a:messageStoreDirspec, ''), '\n'), 0, '')
+    let l:messageStoreDirspecPrefix = get(s:GlobMessageStores(a:messageStoreDirspec, ''), 0, '')
 
     let l:isInMessageStoreDir = (ingo#fs#path#Combine(getcwd(), '') ==# l:messageStoreDirspecPrefix)
     let l:otherPathOrFilespecs =
@@ -125,10 +141,7 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \   map(
     \       reverse(
     \           map(
-    \               split(
-    \                   s:GlobMessageStores(a:messageStoreDirspec, a:ArgLead . '*'),
-    \                   "\n"
-    \               ),
+    \		    s:GlobMessageStores(a:messageStoreDirspec, a:ArgLead . '*'),
     \               'strpart(v:val, len(l:messageStoreDirspecPrefix))'
     \           )
     \       ) +
@@ -141,7 +154,7 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
 endfunction
 
 function! s:GetIndexedMessageFilespec( messageStoreDirspec, index )
-    let l:files = split(s:GlobMessageStores(a:messageStoreDirspec, MessageRecall#Glob()), "\n")
+    let l:files = s:GlobMessageStores(a:messageStoreDirspec, MessageRecall#Glob())
     let l:filespec = get(l:files, a:index, '')
     if empty(l:filespec)
 	if len(l:files) == 0
@@ -196,7 +209,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
     if a:isReplace || s:IsReplace(l:range, a:whenRangeNoMatch)
 	try
 	    silent execute l:range . 'delete _'
-	    let b:MessageRecall_Filename = fnamemodify(l:filespec, ':t')
+	    let b:MessageRecall_Filespec = fnamemodify(l:filespec, ':p')
 	    " After the deletion, the cursor is on the following line. Prepend
 	    " before that.
 	    let l:insertPoint = line('.') - 1
@@ -209,7 +222,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 	    elseif a:whenRangeNoMatch ==# 'all'
 		" Replace the entire buffer instead.
 		silent %delete _
-		let b:MessageRecall_Filename = fnamemodify(l:filespec, ':t')
+		let b:MessageRecall_Filespec = fnamemodify(l:filespec, ':p')
 		let l:insertPoint = '0'
 	    else
 		throw 'ASSERT: Invalid value for a:whenRangeNoMatch: ' . string(a:whenRangeNoMatch)
@@ -275,20 +288,19 @@ function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStor
 	return 0    " Message has been set by s:GetMessageFilespec().
     endif
 
-    execute 'keepalt pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), ' \') ingo#compat#fnameescape(l:filespec)
+    execute 'keepalt pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), ' \') ingo#compat#fnameescape(fnamemodify(l:filespec, ':p'))
     return 1
 endfunction
 
 function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, targetBufNr )
     if exists('b:MessageRecall_ChangedTick') && b:MessageRecall_ChangedTick == b:changedtick
 	" Replace again in the original message buffer.
-	return EditSimilar#Next#Open(
+	return s:OpenNext(
+	\   a:messageStoreDirspec,
 	\   'MessageRecall!',
-	\   0,
-	\   ingo#fs#path#Combine(a:messageStoreDirspec, b:MessageRecall_Filename),
+	\   b:MessageRecall_Filespec,
 	\   a:count,
 	\   (a:isPrevious ? -1 : 1),
-	\   MessageRecall#Glob()
 	\)
     elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch)
 	" Replace for the first time in the original message buffer.
@@ -314,11 +326,61 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	    return MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:targetBufNr)
 	else
 	    " DWIM: The semantics of a:count are interpreted relative to the currently previewed stored message.
-	    let l:filespec = fnamemodify(bufname(l:previewBufNr), ':p')
-	    let l:command = 'pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), ' \')
-	    return EditSimilar#Next#Open(l:command, 0, l:filespec, a:count, (a:isPrevious ? -1 : 1), MessageRecall#Glob())
+	    return s:OpenNext(
+	    \   a:messageStoreDirspec,
+	    \   'pedit +' . escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), ' \'),
+	    \   fnamemodify(bufname(l:previewBufNr), ':p'),
+	    \   a:count,
+	    \   (a:isPrevious ? -1 : 1),
+	    \)
 	endif
     endif
+endfunction
+function! s:OpenNext( messageStoreDirspec, opencmd, filespec, difference, direction )
+    let l:files =
+    \   map(
+    \       filter(
+    \           s:GlobMessageStores(a:messageStoreDirspec, MessageRecall#Glob()),
+    \           '! isdirectory(v:val)'
+    \       ),
+    \       'ingo#fs#path#Normalize(fnamemodify(v:val, ":p"))'
+    \   )
+
+    let l:currentIndex = index(l:files, ingo#fs#path#Normalize(a:filespec))
+    if l:currentIndex == -1
+	if len(l:files) == 0
+	    call ingo#err#Set('No messages in this directory')
+	else
+	    call ingo#err#Set('Cannot locate current file: ' . a:filespec)
+	endif
+	return 0
+    elseif l:currentIndex == 0 && len(l:files) == 1
+	call ingo#err#Set('This is the sole message in the directory')
+	return 0
+    elseif l:currentIndex == 0 && a:direction == -1
+	call ingo#err#Set('No previous message')
+	return 0
+    elseif l:currentIndex == (len(l:files) - 1) && a:direction == 1
+	call ingo#err#Set('No next message')
+	return 0
+    endif
+
+    " A passed difference of 0 means that no [count] was specified and thus
+    " skipping over missing numbers is enabled.
+    let l:difference = max([a:difference, 1])
+
+    let l:offset = a:direction * l:difference
+    let l:replacementIndex = l:currentIndex + l:offset
+    let l:replacementIndex =
+    \   max([
+    \       min([l:replacementIndex, len(l:files) - 1]),
+    \       0
+    \   ])
+    let l:replacementFilespec = l:files[l:replacementIndex]
+
+    " Note: The a:isCreateNew flag has no meaning here, as all replacement
+    " files do already exist.
+    return EditSimilar#Open(a:opencmd, 0, 0, a:filespec, l:replacementFilespec, '')
 endfunction
 
 let &cpo = s:save_cpo
