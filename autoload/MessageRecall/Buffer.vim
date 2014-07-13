@@ -17,6 +17,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.04.012	14-Jul-2014	ENH: For :MessageRecall command completion,
+"				return the messages from other message stores
+"				also in reverse order, so that the latest one
+"				comes first.
 "   1.03.011	01-Apr-2014	Adapt to changed EditSimilar.vim interface that
 "				returns the success status now.
 "				Abort on error for own plugin commands.
@@ -79,7 +83,24 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     " Complete first files from a:messageStoreDirspec for the {filename} argument,
     " then any path- and filespec from the CWD for {filespec}.
     let l:messageStoreDirspecPrefix = glob(ingo#fs#path#Combine(a:messageStoreDirspec, ''))
+
     let l:isInMessageStoreDir = (ingo#fs#path#Combine(getcwd(), '') ==# l:messageStoreDirspecPrefix)
+    let l:otherPathOrFilespecs =
+    \   filter(
+    \       split(
+    \           glob(a:ArgLead . '*'),
+    \           "\n"
+    \       ),
+    \       'l:isInMessageStoreDir ?' .
+    \           'ingo#fs#path#Combine(fnamemodify(v:val, ":p:h"), "") !=# l:messageStoreDirspecPrefix :' .
+    \           '1'
+    \   )
+    if len(l:otherPathOrFilespecs) > 0 && l:otherPathOrFilespecs[0] =~# ingo#regexp#FromWildcard(MessageRecall#Glob(), '')
+	" Return the messages from other message stores also in reverse order,
+	" so that the latest one comes first.
+	call reverse(l:otherPathOrFilespecs)
+    endif
+
     return
     \   map(
     \       reverse(
@@ -92,15 +113,7 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \           )
     \       ) +
     \       map(
-    \           filter(
-    \               split(
-    \                   glob(a:ArgLead . '*'),
-    \                   "\n"
-    \               ),
-    \               'l:isInMessageStoreDir ?' .
-    \	                'ingo#fs#path#Combine(fnamemodify(v:val, ":p:h"), "") !=# l:messageStoreDirspecPrefix :' .
-    \	                '1'
-    \           ),
+    \           l:otherPathOrFilespecs,
     \           'isdirectory(v:val) ? ingo#fs#path#Combine(v:val, "") : v:val'
     \       ),
     \       'ingo#compat#fnameescape(v:val)'
