@@ -145,7 +145,7 @@ function! s:IsReplace( range, whenRangeNoMatch )
     let l:isReplace = 0
     try
 	let l:isReplace = (ingo#range#Get(a:range) =~# '^\n*$')
-    catch /^Vim\%((\a\+)\)\=:E/
+    catch /^Vim\%((\a\+)\)\=:/
 	if a:whenRangeNoMatch ==# 'all'
 	    let l:isReplace = (ingo#range#Get('%') =~# '^\n*$')
 	endif
@@ -167,7 +167,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 	    " After the deletion, the cursor is on the following line. Prepend
 	    " before that.
 	    let l:insertPoint = line('.') - 1
-	catch /^Vim\%((\a\+)\)\=:E/
+	catch /^Vim\%((\a\+)\)\=:/
 	    if a:whenRangeNoMatch ==# 'error'
 		call ingo#err#Set('MessageRecall: Failed to capture message: ' . ingo#msg#MsgFromVimException())
 		return 0
