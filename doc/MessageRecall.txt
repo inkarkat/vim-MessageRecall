@@ -102,7 +102,7 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES					  *MessageRecall-dependencies*
 
 - Requires Vim 7.0 or higher.
-- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.012 or
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.018 or
   higher.
 - Requires the EditSimilar plugin (vimscript #2544), version 2.40 or higher.
 - Requires the BufferPersist plugin (vimscript #4115).
@@ -149,7 +149,7 @@ IDEAS							 *MessageRecall-ideas*
 ==============================================================================
 HISTORY						       *MessageRecall-history*
 
-1.03	RELEASEME
+1.03	16-Apr-2014
 - Adapt to changed EditSimilar.vim interface that returns the success status
   now. Abort on error for own plugin commands.
   *** You need to update to EditSimilar.vim (vimscript #2544) version 2.40! ***
