@@ -2,16 +2,20 @@
 "
 " DEPENDENCIES:
 "   - EditSimilar/Next.vim autoload script
+"   - ingo/err.vim autoload script
 "   - ingo/escape/command.vim autoload script
 "   - MessageRecall.vim autoload script
 "   - MessageRecall/Buffer.vim autoload script
 "
-" Copyright: (C) 2012-2013 Ingo Karkat
+" Copyright: (C) 2012-2014 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.03.006	01-Apr-2014	Adapt to changed EditSimilar.vim interface that
+"				returns the success status now.
+"				Abort on error for own plugin commands.
 "   1.02.005	09-Aug-2013	Allow to change / disable the defined mappings
 "				by using intermediate <Plug>-mappings. This also
 "				prevents escaping issues with my buffer-local
@@ -40,12 +44,12 @@
 
 function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype )
     let l:messageStoreDirspec = expand('%:p:h')
-    execute printf('command! -buffer -bang MessageRecall call MessageRecall#Buffer#PreviewRecall(<q-bang>, %d)', a:targetBufNr)
-    execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView call MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d)', MessageRecall#GetFuncrefs(l:messageStoreDirspec)[1], string(l:messageStoreDirspec), a:targetBufNr)
+    execute printf('command! -buffer -bang MessageRecall if ! MessageRecall#Buffer#PreviewRecall(<q-bang>, %d) | echoerr ingo#err#Get() | endif', a:targetBufNr)
+    execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView if ! MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d) | echoerr ingo#err#Get() | endif', MessageRecall#GetFuncrefs(l:messageStoreDirspec)[1], string(l:messageStoreDirspec), a:targetBufNr)
 
     let l:command = 'view +' . ingo#escape#command#mapescape(escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, a:filetype), ' \'))
-    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewPrev) :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1, -1, MessageRecall#Glob())<CR>', string(l:command))
-    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewNext) :<C-u>call EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1,  1, MessageRecall#Glob())<CR>', string(l:command))
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewPrev) :<C-u>if ! EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1, -1, MessageRecall#Glob())<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:command))
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewNext) :<C-u>if ! EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1,  1, MessageRecall#Glob())<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:command))
     if ! hasmapto('<Plug>(MessageRecallPreviewPrev)', 'n')
 	nmap <buffer> <C-p> <Plug>(MessageRecallPreviewPrev)
     endif
@@ -65,8 +69,8 @@ endfunction
 function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirspec, range, whenRangeNoMatch, CompleteFuncref )
     let l:targetBufNr = bufnr('')
 
-    execute printf('command! -buffer -bang -count=1 -nargs=? -complete=customlist,%s MessageRecall  call MessageRecall#Buffer#Recall(<bang>0, <count>, <q-args>, %s, %s, %s)', a:CompleteFuncref, string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch))
-    execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView    call MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d)', a:CompleteFuncref, string(a:messageStoreDirspec), l:targetBufNr)
+    execute printf('command! -buffer -bang -count=1 -nargs=? -complete=customlist,%s MessageRecall  if ! MessageRecall#Buffer#Recall(<bang>0, <count>, <q-args>, %s, %s, %s) | echoerr ingo#err#Get() | endif', a:CompleteFuncref, string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch))
+    execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView    if ! MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d) | echoerr ingo#err#Get() | endif', a:CompleteFuncref, string(a:messageStoreDirspec), l:targetBufNr)
 
     execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallGoPrev) :<C-u>call MessageRecall#Buffer#Replace(1, v:count1, %s, %s, %s, %d)<CR>', string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch), l:targetBufNr)
     execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallGoNext) :<C-u>call MessageRecall#Buffer#Replace(0, v:count1, %s, %s, %s, %d)<CR>', string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch), l:targetBufNr)
