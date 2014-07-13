@@ -1,7 +1,6 @@
 " MessageRecall/MappingsAndCommands.vim: Setup for message buffer and preview.
 "
 " DEPENDENCIES:
-"   - EditSimilar/Next.vim autoload script
 "   - ingo/err.vim autoload script
 "   - ingo/escape/command.vim autoload script
 "   - MessageRecall.vim autoload script
@@ -13,6 +12,12 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.10.007	14-Jul-2014	Also pass the messageStores configuration to
+"				MessageRecall#MappingsAndCommands#PreviewSetup()
+"				and duplicate the config to each previewed
+"				message buffer.
+"				Replace EditSimilar#Next#Open() with
+"				MessageRecall#Buffer#OpenNext().
 "   1.03.006	01-Apr-2014	Adapt to changed EditSimilar.vim interface that
 "				returns the success status now.
 "				Abort on error for own plugin commands.
@@ -42,14 +47,20 @@
 "				consistency.
 "   1.00.001	19-Jun-2012	file creation
 
-function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype )
+function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype, messageStores )
+    if ! empty(a:messageStores)
+	" Duplicate a buffer-local message stores configuration; a global one is
+	" automatically shared.
+	let b:MessageRecall_MessageStores = a:messageStores
+    endif
+
     let l:messageStoreDirspec = expand('%:p:h')
     execute printf('command! -buffer -bang MessageRecall if ! MessageRecall#Buffer#PreviewRecall(<q-bang>, %d) | echoerr ingo#err#Get() | endif', a:targetBufNr)
     execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView if ! MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d) | echoerr ingo#err#Get() | endif', MessageRecall#GetFuncrefs(l:messageStoreDirspec)[1], string(l:messageStoreDirspec), a:targetBufNr)
 
     let l:command = 'view +' . ingo#escape#command#mapescape(escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, a:filetype), ' \'))
-    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewPrev) :<C-u>if ! EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1, -1, MessageRecall#Glob())<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:command))
-    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewNext) :<C-u>if ! EditSimilar#Next#Open(%s, 0, expand("%%:p"), v:count1,  1, MessageRecall#Glob())<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:command))
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewPrev) :<C-u>if ! MessageRecall#Buffer#OpenNext(%s, %s, expand("%%:p"), v:count1, -1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:messageStoreDirspec), string(l:command))
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewNext) :<C-u>if ! MessageRecall#Buffer#OpenNext(%s, %s, expand("%%:p"), v:count1,  1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:messageStoreDirspec), string(l:command))
     if ! hasmapto('<Plug>(MessageRecallPreviewPrev)', 'n')
 	nmap <buffer> <C-p> <Plug>(MessageRecallPreviewPrev)
     endif
