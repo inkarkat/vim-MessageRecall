@@ -1,0 +1,205 @@
+*MessageRecall.txt*     Browse and re-insert previous (commit, status) messages.
+
+		       MESSAGE RECALL    by Ingo Karkat
+							   *MessageRecall.vim*
+description			|MessageRecall-description|
+usage				|MessageRecall-usage|
+installation			|MessageRecall-installation|
+configuration			|MessageRecall-configuration|
+integration			|MessageRecall-integration|
+limitations			|MessageRecall-limitations|
+known problems			|MessageRecall-known-problems|
+todo				|MessageRecall-todo|
+history				|MessageRecall-history|
+
+==============================================================================
+DESCRIPTION					   *MessageRecall-description*
+
+This plugin automatically persists (parts of) buffers used for the editing of
+commit (or other) messages, where Vim is invoked as the editor from an
+external tool. In these buffers, it sets up mappings and commands to iterate
+through stored past messages, and recall the contents for use in the currently
+edited message. This way, you automatically collect a history of (committed or
+aborted) past messages, and can quickly base your current message on contents
+recalled from that history.
+
+SEE ALSO								     *
+
+This plugin is used by:
+VcsMessageRecall (vimscript #4117): Browse and re-insert previous VCS commit
+				    messages.
+
+RELATED WORKS								     *
+
+==============================================================================
+USAGE							 *MessageRecall-usage*
+
+The plugin is completely inactive until you set it up for a particular
+buffer through the following function; you'll find the details directly in the
+.vim/autoload/MessageRecall.vim implementation file.
+
+MessageRecall#Setup( messageStoreDirspec, ... )
+
+
+INSIDE THE CURRENT MESSAGE BUFFER					     *
+						 *MessageRecall-message-usage*
+After setup, the following mappings and commands are available in the current
+message buffer:
+
+CTRL-P, CTRL-N		When the buffer has no unsaved changes: Replace the
+			edited message with a [count]'th previous / next
+			stored message.
+			When the buffer is modified: Open the [count]'th
+			previous / first stored message in the preview window.
+			When the buffer is modified and a stored message is
+			already being previewed: Open the [count]'th previous
+			/ next stored message there.
+
+								*:MessageView*
+:[count]MessageView
+			View the [count]'th previous stored message in the
+			|preview-window|.
+:MessageView {message}|{filespec}
+			View {message} (auto-completed from the message store
+			directory) or any arbitrary {filespec} contents
+			in the |preview-window|.
+
+							      *:MessageRecall*
+:[count]MessageRecall[!]
+			Insert the [count]'th previous stored message below
+			the current line.
+:MessageRecall[!] {message}|{filespec}
+			Insert {message} (auto-completed from the message
+			store directory) or any arbitrary {filespec} contents
+			below the current line.
+
+			When the existing message consists of just empty
+			lines (originating from the message template that the
+			tool invoking Vim has put there), the inserted message
+			replaces those empty lines. With [!]: Replace an
+			existing message with the inserted one.
+
+
+INSIDE A MESSAGE PREVIEW WINDOW						     *
+						 *MessageRecall-preview-usage*
+CTRL-P, CTRL-N		Go to the previous / next stored message.
+
+:MessageRecall		Insert the previewed stored message below the current
+			line in the buffer from which the message preview was
+			opened.
+
+==============================================================================
+INSTALLATION					  *MessageRecall-installation*
+
+This script is packaged as a |vimball|. If you have the "gunzip" decompressor
+in your PATH, simply edit the *.vmb.gz package in Vim; otherwise, decompress
+the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
+vimball or via the |:UseVimball| command. >
+    vim MessageRecall*.vmb.gz
+    :so %
+To uninstall, use the |:RmVimball| command.
+
+DEPENDENCIES					  *MessageRecall-dependencies*
+
+- Requires Vim 7.0 or higher.
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.021 or
+  higher.
+- Requires the BufferPersist plugin (vimscript #4115).
+
+==============================================================================
+CONFIGURATION					 *MessageRecall-configuration*
+
+For a permanent configuration, put the following commands into your |vimrc|:
+	       *g:MessageRecall_MessageStores* *b:MessageRecall_MessageStores*
+When you have multiple, related repositories, you may wish to recall messages
+from other message stores. Though this is possible via |:MessageRecall|
+path/to/other/message-store, it is tedious, and you cannot browse / preview
+them as easily as the ones from the current message store. For this, you can
+define additional message stores via: >
+    let b:MessageRecall_MessageStores = ['', 'path/to/other/message-store']
+The empty string stands for the current message store; by omitting it, its
+messages won't be offered any more. Note that this only affects recall and
+preview; the edited messages are still exclusively persisted to the current
+message store.
+
+							 *MessageRecall-remap*
+If you want to use different mappings, first disable the default key mappings
+in your |vimrc|: >
+    map <Plug>DisableMessageRecallPreviewPrev <Plug>(MessageRecallPreviewPrev)
+    map <Plug>DisableMessageRecallPreviewNext <Plug>(MessageRecallPreviewNext)
+    map <Plug>DisableMessageRecallGoPrev      <Plug>(MessageRecallGoPrev)
+    map <Plug>DisableMessageRecallGoNext      <Plug>(MessageRecallGoNext)
+Since there's no common filetype for this plugin, |User| events are fired for
+each message buffer. You can hook into these events to define alternative
+mappings: >
+    autocmd User MessageRecallBuffer  map <buffer> <Leader>P <Plug>(MessageRecallGoPrev)
+    autocmd User MessageRecallBuffer  map <buffer> <Leader>N <Plug>(MessageRecallGoNext)
+    autocmd User MessageRecallPreview map <buffer> <Leader>P <Plug>(MessageRecallPreviewPrev)
+    autocmd User MessageRecallPreview map <buffer> <Leader>N <Plug>(MessageRecallPreviewNext)
+<
+==============================================================================
+INTEGRATION					   *MessageRecall-integration*
+
+==============================================================================
+LIMITATIONS					   *MessageRecall-limitations*
+
+KNOWN PROBLEMS					*MessageRecall-known-problems*
+
+TODO							  *MessageRecall-todo*
+
+								*:MessageList*
+:MessageList		Show all stored messages in the |quickfix| list,
+			starting with the most recent one.
+							     *:MessageVimGrep*
+:MessageVimGrep	[{pattern}]
+			Search all stored messages for {pattern}, and fill the
+			|quickfix| list with the matches.
+
+IDEAS							 *MessageRecall-ideas*
+
+==============================================================================
+HISTORY						       *MessageRecall-history*
+
+1.10	RELEASEME
+- ENH: For :MessageRecall command completion, return the messages from other
+  message stores also in reverse order, so that the latest one comes first.
+- ENH: Allow to override / extend the message store(s) via
+  b:MessageRecall_MessageStores configuration.
+- Get rid of the dependency to the EditSimilar.vim plugin.
+  *** You need to update to ingo-library (vimscript #4433) version 1.021! ***
+
+1.03	16-Apr-2014
+- Adapt to changed EditSimilar.vim interface that returns the success status
+  now. Abort on error for own plugin commands.
+  *** You need to update to EditSimilar.vim (vimscript #2544) version 2.40! ***
+
+1.02	21-Nov-2013
+- CHG: Only replace on <C-p> / <C-n> in the message buffer when the considered
+  range is just empty lines. I came to dislike the previous replacement also
+  when the message had been persisted.
+- CHG: On <C-p> / <C-n> in the original message buffer: When the buffer is
+  modified and a stored message is already being previewed, change the
+  semantics of count to be interpreted relative to the currently previewed
+  stored message. Beforehand, one had to use increasing <C-p>, 2<C-p>, 3<C-p>,
+  etc. to iterate through stored messages (or go to the preview window and
+  invoke the mapping there).
+- ENH: Allow to override the default <C-p> / <C-n> mappings.
+- Add dependency to ingo-library (vimscript #4433). *** You need to separately
+  install ingo-library (vimscript #4433) version 1.012 (or higher)! ***
+
+1.01	12-Jul-2012
+BUG: Script error E486 when replacing a non-matching commit message buffer.
+
+1.00	25-Jun-2012
+First published version.
+
+0.01	09-Jun-2012
+Started development.
+
+==============================================================================
+Copyright: (C) 2012-2014 Ingo Karkat
+The VIM LICENSE applies to this plugin; see |copyright|.
+
+Maintainer:	Ingo Karkat <ingo@karkat.de>
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
