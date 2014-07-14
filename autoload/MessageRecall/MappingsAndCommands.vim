@@ -12,6 +12,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.10.008	15-Jul-2014	Undo the duplication of
+"				b:MessageRecall_MessageStores and instead just
+"				pass a:targetBufNr into
+"				MessageRecall#Buffer#OpenNext().
 "   1.10.007	14-Jul-2014	Also pass the messageStores configuration to
 "				MessageRecall#MappingsAndCommands#PreviewSetup()
 "				and duplicate the config to each previewed
@@ -47,20 +51,14 @@
 "				consistency.
 "   1.00.001	19-Jun-2012	file creation
 
-function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype, messageStores )
-    if ! empty(a:messageStores)
-	" Duplicate a buffer-local message stores configuration; a global one is
-	" automatically shared.
-	let b:MessageRecall_MessageStores = a:messageStores
-    endif
-
+function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype )
     let l:messageStoreDirspec = expand('%:p:h')
     execute printf('command! -buffer -bang MessageRecall if ! MessageRecall#Buffer#PreviewRecall(<q-bang>, %d) | echoerr ingo#err#Get() | endif', a:targetBufNr)
     execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView if ! MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d) | echoerr ingo#err#Get() | endif', MessageRecall#GetFuncrefs(l:messageStoreDirspec)[1], string(l:messageStoreDirspec), a:targetBufNr)
 
     let l:command = 'view +' . ingo#escape#command#mapescape(escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, a:filetype), ' \'))
-    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewPrev) :<C-u>if ! MessageRecall#Buffer#OpenNext(%s, %s, "", expand("%%:p"), v:count1, -1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:messageStoreDirspec), string(l:command))
-    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewNext) :<C-u>if ! MessageRecall#Buffer#OpenNext(%s, %s, "", expand("%%:p"), v:count1,  1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:messageStoreDirspec), string(l:command))
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewPrev) :<C-u>if ! MessageRecall#Buffer#OpenNext(%s, %s, "", expand("%%:p"), v:count1, -1, %d)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:messageStoreDirspec), string(l:command), a:targetBufNr)
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewNext) :<C-u>if ! MessageRecall#Buffer#OpenNext(%s, %s, "", expand("%%:p"), v:count1,  1, %d)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:messageStoreDirspec), string(l:command), a:targetBufNr)
     if ! hasmapto('<Plug>(MessageRecallPreviewPrev)', 'n')
 	nmap <buffer> <C-p> <Plug>(MessageRecallPreviewPrev)
     endif
