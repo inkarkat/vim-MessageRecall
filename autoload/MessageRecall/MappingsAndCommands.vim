@@ -59,8 +59,8 @@ function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype,
     execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView if ! MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d) | echoerr ingo#err#Get() | endif', MessageRecall#GetFuncrefs(l:messageStoreDirspec)[1], string(l:messageStoreDirspec), a:targetBufNr)
 
     let l:command = 'view +' . ingo#escape#command#mapescape(escape(MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, a:filetype), ' \'))
-    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewPrev) :<C-u>if ! MessageRecall#Buffer#OpenNext(%s, %s, expand("%%:p"), v:count1, -1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:messageStoreDirspec), string(l:command))
-    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewNext) :<C-u>if ! MessageRecall#Buffer#OpenNext(%s, %s, expand("%%:p"), v:count1,  1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:messageStoreDirspec), string(l:command))
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewPrev) :<C-u>if ! MessageRecall#Buffer#OpenNext(%s, %s, "", expand("%%:p"), v:count1, -1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:messageStoreDirspec), string(l:command))
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallPreviewNext) :<C-u>if ! MessageRecall#Buffer#OpenNext(%s, %s, "", expand("%%:p"), v:count1,  1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>', string(l:messageStoreDirspec), string(l:command))
     if ! hasmapto('<Plug>(MessageRecallPreviewPrev)', 'n')
 	nmap <buffer> <C-p> <Plug>(MessageRecallPreviewPrev)
     endif
