@@ -1,4 +1,3 @@
-autoload/escapings.vim
 autoload/MessageRecall.vim
 autoload/MessageRecall/Buffer.vim
 autoload/MessageRecall/MappingsAndCommands.vim
