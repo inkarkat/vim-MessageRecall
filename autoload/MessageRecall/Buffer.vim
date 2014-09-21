@@ -17,6 +17,17 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.10.013	15-Jul-2014	Instead of duplicating the
+"				b:MessageRecall_MessageStores variable into the
+"				previewed buffers, use the (already passed)
+"				a:targetBufNr and access the original buffer's
+"				variable contents. For that,
+"				MessageRecall#Buffer#OpenNext() gets the
+"				a:targetBufNr passed in, and
+"				s:GlobMessageStores() optionally takes a
+"				predefined messageStores configuration.
+"				Export MessageRecall#Buffer#ExtendMessageStore()
+"				for use in the new :MessageStore command.
 "   1.10.012	14-Jul-2014	ENH: For :MessageRecall command completion,
 "				return the messages from other message stores
 "				also in reverse order, so that the latest one
@@ -101,11 +112,14 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! s:GlobMessageStores( messageStoreDirspec, expr )
-    let l:messageStores = map(
+function! MessageRecall#Buffer#ExtendMessageStore( messageStoreDirspec, messageStore )
+    return (empty(v:val) ? a:messageStoreDirspec : ingo#fs#path#Normalize(fnamemodify(v:val, ":p")))
+endfunction
+function! s:GlobMessageStores( messageStoreDirspec, expr, ... )
+    let l:messageStores = (a:0 && ! empty(a:1) ? a:1 : map(
     \   ingo#plugin#setting#GetBufferLocal('MessageRecall_MessageStores', ['']),
-    \   'empty(v:val) ? a:messageStoreDirspec : fnamemodify(v:val, ":p")'
-    \)
+    \   'MessageRecall#Buffer#ExtendMessageStore(a:messageStoreDirspec, v:val)'
+    \))
     " Note: Need to ensure absolute filespecs for the
     " b:MessageRecall_MessageStores, because when previewing the contents of
     " different stores, the CWD may change. Therefore, apply the changes (also
@@ -300,15 +314,10 @@ function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
     return 1
 endfunction
 function! MessageRecall#Buffer#GetPreviewCommands( targetBufNr, filetype )
-    " Duplicate a buffer local message stores configuration to the previewed
-    " buffer.
-    let l:targetMessageStores = (a:targetBufNr >= 1 ?
-    \   getbufvar(a:targetBufNr, 'MessageRecall_MessageStores') :
-    \   get(b:, 'MessageRecall_MessageStores', '')
-    \)
-
+    " Pass the target buffer number to enable the mappings and commands in the
+    " previewed buffer to access a buffer local message stores configuration.
     return
-    \	printf('call MessageRecall#MappingsAndCommands#PreviewSetup(%d,%s,%s)', a:targetBufNr, string(a:filetype), string(l:targetMessageStores)) .
+    \	printf('call MessageRecall#MappingsAndCommands#PreviewSetup(%d,%s)', a:targetBufNr, string(a:filetype)) .
     \	'|setlocal readonly' .
     \   (empty(a:filetype) ? '' : printf('|setf %s', a:filetype))
 endfunction
@@ -331,6 +340,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	\   b:MessageRecall_Filespec,
 	\   a:count,
 	\   (a:isPrevious ? -1 : 1),
+	\   -1
 	\)
     elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch)
 	" Replace for the first time in the original message buffer.
@@ -362,15 +372,17 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	    \   fnamemodify(bufname(l:previewBufNr), ':p'),
 	    \   a:count,
 	    \   (a:isPrevious ? -1 : 1),
+	    \   -1
 	    \)
 	endif
     endif
 endfunction
-function! MessageRecall#Buffer#OpenNext( messageStoreDirspec, opencmd, exFileCommands, filespec, difference, direction )
+function! MessageRecall#Buffer#OpenNext( messageStoreDirspec, opencmd, exFileCommands, filespec, difference, direction, targetBufNr )
+    let l:messageStores = (a:targetBufNr == -1 ? [] : getbufvar(a:targetBufNr, 'MessageRecall_MessageStores'))
     let l:files =
     \   map(
     \       filter(
-    \           s:GlobMessageStores(a:messageStoreDirspec, MessageRecall#Glob()),
+    \           s:GlobMessageStores(a:messageStoreDirspec, MessageRecall#Glob(), l:messageStores),
     \           '! isdirectory(v:val)'
     \       ),
     \       'ingo#fs#path#Normalize(fnamemodify(v:val, ":p"))'
