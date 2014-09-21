@@ -88,6 +88,17 @@ CTRL-P, CTRL-N		Go to the previous / next stored message.
 			line in the buffer from which the message preview was
 			opened.
 
+INSIDE BOTH								     *
+							       *:MessageStore*
+:MessageStore[!] {identifier}|{dirspec}
+			Add the directory {dirspec} as a source (with [!]: set
+			as the sole source) for recalled messages. If message
+			stores have been preconfigured (cp.
+			|g:MessageRecall_ConfiguredMessageStores|), these can
+			be referenced via their short {identifier} instead.
+:MessageStore		List all message store directories for the current
+			buffer.
+
 ==============================================================================
 INSTALLATION					  *MessageRecall-installation*
 
@@ -121,6 +132,16 @@ The empty string stands for the current message store; by omitting it, its
 messages won't be offered any more. Note that this only affects recall and
 preview; the edited messages are still exclusively persisted to the current
 message store.
+
+*g:MessageRecall_ConfiguredMessageStores* *b:MessageRecall_ConfiguredMessageStores*
+If you don't want to directly add more message stores, but enable the user to
+quickly do so, you can configure additional message stores together with short
+identifying names: >
+    let g:MessageRecall_ConfiguredMessageStores = {
+    \	'repo1': '/path/to/repo1/.svn/commit-msgs',
+    \	'repo2': '/path/to/repo2/.git/commit-msgs',
+    \]
+<
 
 							 *MessageRecall-remap*
 If you want to use different mappings, first disable the default key mappings
@@ -166,6 +187,9 @@ HISTORY						       *MessageRecall-history*
 - ENH: Allow to override / extend the message store(s) via
   b:MessageRecall_MessageStores configuration.
 - Get rid of the dependency to the EditSimilar.vim plugin.
+- ENH: Add :MessageStore command that allows to add / replace message stores.
+  Presets can be configured via the new
+  b:MessageRecall_ConfiguredMessageStores variable.
   *** You need to update to ingo-library (vimscript #4433) version 1.021! ***
 
 1.03	16-Apr-2014
