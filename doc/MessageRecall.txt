@@ -181,7 +181,7 @@ IDEAS							 *MessageRecall-ideas*
 ==============================================================================
 HISTORY						       *MessageRecall-history*
 
-1.10	RELEASEME
+1.10	23-Dec-2014
 - ENH: For :MessageRecall command completion, return the messages from other
   message stores also in reverse order, so that the latest one comes first.
 - ENH: Allow to override / extend the message store(s) via
@@ -192,6 +192,7 @@ HISTORY						       *MessageRecall-history*
   b:MessageRecall_ConfiguredMessageStores variable.
 - Use ingo#compat#glob() and ingo#compat#globpath().
   *** You need to update to ingo-library (vimscript #4433) version 1.022! ***
+  The dependency to the EditSimilar.vim plugin has been dropped.
 
 1.03	16-Apr-2014
 - Adapt to changed EditSimilar.vim interface that returns the success status
