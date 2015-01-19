@@ -16,6 +16,8 @@
 "				b:MessageRecall_MessageStores and instead just
 "				pass a:targetBufNr into
 "				MessageRecall#Buffer#OpenNext().
+"				Add s:CommonSetup() which defines a new
+"				:MessageStore command.
 "   1.10.007	14-Jul-2014	Also pass the messageStores configuration to
 "				MessageRecall#MappingsAndCommands#PreviewSetup()
 "				and duplicate the config to each previewed
@@ -51,8 +53,14 @@
 "				consistency.
 "   1.00.001	19-Jun-2012	file creation
 
+function! s:CommonSetup( targetBufNr, messageStoreDirspec )
+    execute printf('command! -buffer -bang -nargs=? -complete=customlist,MessageRecall#Stores#Complete MessageStore if ! MessageRecall#Stores#Set(%d, %s, <bang>0, <q-args>) | echoerr ingo#err#Get() | endif', a:targetBufNr, string(a:messageStoreDirspec))
+endfunction
+
 function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype )
     let l:messageStoreDirspec = expand('%:p:h')
+    call s:CommonSetup(a:targetBufNr, l:messageStoreDirspec)
+
     execute printf('command! -buffer -bang MessageRecall if ! MessageRecall#Buffer#PreviewRecall(<q-bang>, %d) | echoerr ingo#err#Get() | endif', a:targetBufNr)
     execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView if ! MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d) | echoerr ingo#err#Get() | endif', MessageRecall#GetFuncrefs(l:messageStoreDirspec)[1], string(l:messageStoreDirspec), a:targetBufNr)
 
@@ -77,6 +85,8 @@ endfunction
 
 function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirspec, range, whenRangeNoMatch, CompleteFuncref )
     let l:targetBufNr = bufnr('')
+
+    call s:CommonSetup(l:targetBufNr, a:messageStoreDirspec)
 
     execute printf('command! -buffer -bang -count=1 -nargs=? -complete=customlist,%s MessageRecall  if ! MessageRecall#Buffer#Recall(<bang>0, <count>, <q-args>, %s, %s, %s) | echoerr ingo#err#Get() | endif', a:CompleteFuncref, string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch))
     execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView    if ! MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d) | echoerr ingo#err#Get() | endif', a:CompleteFuncref, string(a:messageStoreDirspec), l:targetBufNr)
