@@ -7,16 +7,21 @@
 "   - ingo/msg.vim autoload script
 "   - ingo/plugin.vim autoload script
 "   - ingo/range.vim autoload script
+"   - ingo/regexp/fromwildcard.vim autoload script
 "   - ingo/window/preview.vim autoload script
 "   - MessageRecall.vim autoload script
 "   - MessageRecall/MappingsAndCommands.vim autoload script
 "
-" Copyright: (C) 2012-2014 Ingo Karkat
+" Copyright: (C) 2012-2015 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.11.015	30-Jan-2015	Move from the simplistic
+"				ingo#regexp#FromWildcard() to
+"				ingo#regexp#fromwildcard#Convert() to handle all
+"				wildcards.
 "   1.10.014	22-Sep-2014	Use ingo#compat#glob() and
 "				ingo#compat#globpath().
 "   1.10.013	15-Jul-2014	Instead of duplicating the
@@ -168,7 +173,7 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \           'ingo#fs#path#Combine(fnamemodify(v:val, ":p:h"), "") !=# l:messageStoreDirspecPrefix :' .
     \           '1'
     \   )
-    if len(l:otherPathOrFilespecs) > 0 && l:otherPathOrFilespecs[0] =~# ingo#regexp#FromWildcard(MessageRecall#Glob(), '')
+    if len(l:otherPathOrFilespecs) > 0 && l:otherPathOrFilespecs[0] =~# ingo#regexp#fromwildcard#Convert(MessageRecall#Glob(), '')
 	" Return the messages from other message stores also in reverse order,
 	" so that the latest one comes first.
 	call reverse(l:otherPathOrFilespecs)
