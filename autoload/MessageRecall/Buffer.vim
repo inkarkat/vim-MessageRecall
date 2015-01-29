@@ -17,6 +17,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.10.014	22-Sep-2014	Use ingo#compat#glob() and
+"				ingo#compat#globpath().
 "   1.10.013	15-Jul-2014	Instead of duplicating the
 "				b:MessageRecall_MessageStores variable into the
 "				previewed buffers, use the (already passed)
@@ -126,7 +128,7 @@ function! s:GlobMessageStores( messageStoreDirspec, expr, ... )
     " the expansion of the empty value, as this doesn't hurt) directly on the
     " underlying configuration variable.
 
-    let l:filespecs = split(globpath(
+    let l:filespecs = ingo#compat#globpath(
     \   join(
     \       map(
     \           l:messageStores,
@@ -135,7 +137,7 @@ function! s:GlobMessageStores( messageStoreDirspec, expr, ... )
     \       ','
     \   ),
     \   a:expr
-    \), '\n')
+    \, 0, 1)
 
     return sort(l:filespecs, 's:SortByMessageFilename')
 endfunction
@@ -161,10 +163,7 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     let l:isInMessageStoreDir = (ingo#fs#path#Combine(getcwd(), '') ==# l:messageStoreDirspecPrefix)
     let l:otherPathOrFilespecs =
     \   filter(
-    \       split(
-    \           glob(a:ArgLead . '*'),
-    \           "\n"
-    \       ),
+    \       ingo#compat#glob(a:ArgLead . '*', 0, 1),
     \       'l:isInMessageStoreDir ?' .
     \           'ingo#fs#path#Combine(fnamemodify(v:val, ":p:h"), "") !=# l:messageStoreDirspecPrefix :' .
     \           '1'
