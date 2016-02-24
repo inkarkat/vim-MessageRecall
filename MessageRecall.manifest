@@ -1,4 +1,5 @@
 autoload/MessageRecall.vim
 autoload/MessageRecall/Buffer.vim
 autoload/MessageRecall/MappingsAndCommands.vim
+autoload/MessageRecall/Stores.vim
 doc/MessageRecall.txt
