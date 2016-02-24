@@ -4,14 +4,15 @@
 "   - BufferPersist.vim autoload script
 "   - MessageRecall/Buffer.vim autoload script
 "   - MessageRecall/MappingsAndCommands.vim autoload script
-"   - ingofile.vim autoload script
+"   - ingo/fs/path.vim autoload script
 "
-" Copyright: (C) 2012 Ingo Karkat
+" Copyright: (C) 2012-2013 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.02.004	01-Jun-2013	Move ingofile.vim into ingo-library.
 "   1.01.003	12-Jul-2012	The :MessageRecall command in the message buffer
 "				needs access to the a:whenRangeNoMatch option.
 "   1.00.006	24-Jun-2012	Change filename template from "message" to the
@@ -48,7 +49,7 @@ function! MessageRecall#MessageStore( messageStoreDirspec )
 	call mkdir(a:messageStoreDirspec, 'p', 0700)
     endif
 
-    return ingofile#CombineToFilespec(a:messageStoreDirspec, strftime(s:messageFilenameTemplate))
+    return ingo#fs#path#Combine(a:messageStoreDirspec, strftime(s:messageFilenameTemplate))
 endfunction
 
 let s:counter = 0
@@ -94,7 +95,7 @@ function! s:SetupAutocmds( messageStoreDirspec )
     if ! has_key(s:autocmds, a:messageStoreDirspec)
 	augroup MessageRecall
 	    execute printf('autocmd BufRead %s %s',
-	    \   ingofile#CombineToFilespec(a:messageStoreDirspec, MessageRecall#Glob()),
+	    \   ingo#fs#path#Combine(a:messageStoreDirspec, MessageRecall#Glob()),
 	    \   MessageRecall#Buffer#GetPreviewCommands(-1, &l:filetype)
 	    \)
 	augroup END
@@ -143,7 +144,7 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
 	return
     endif
 
-    let l:messageStoreDirspec = ingofile#NormalizePathSeparators(a:messageStoreDirspec)
+    let l:messageStoreDirspec = ingo#fs#path#Normalize(a:messageStoreDirspec)
     let [l:MessageStoreFuncref, l:CompleteFuncref] = MessageRecall#GetFuncrefs(l:messageStoreDirspec)
 
     let l:options = (a:0 ? a:1 : {})
