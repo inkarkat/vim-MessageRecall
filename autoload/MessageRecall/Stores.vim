@@ -38,7 +38,7 @@ function! MessageRecall#Stores#Complete( ArgLead, CmdLine, CursorPos )
     let l:dirspecs =
     \   map(
     \       filter(
-    \           split(glob(a:ArgLead . '*'), '\n'),
+    \           ingo#compat#glob(a:ArgLead . '*', 0, 1),
     \           'isdirectory(v:val)'
     \       ),
     \       'ingo#compat#fnameescape(ingo#fs#path#Combine(v:val, ""))'
