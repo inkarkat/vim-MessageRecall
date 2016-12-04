@@ -3,15 +3,17 @@
 " DEPENDENCIES:
 "   - ingo/err.vim autoload script
 "   - ingo/escape/command.vim autoload script
+"   - ingo/event.vim autoload script
 "   - MessageRecall.vim autoload script
 "   - MessageRecall/Buffer.vim autoload script
 "
-" Copyright: (C) 2012-2014 Ingo Karkat
+" Copyright: (C) 2012-2015 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.11.009	20-Jan-2015	Use ingo#event#TriggerCustom().
 "   1.10.008	15-Jul-2014	Undo the duplication of
 "				b:MessageRecall_MessageStores and instead just
 "				pass a:targetBufNr into
@@ -75,12 +77,7 @@ function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype 
     endif
 
     let b:MessageRecall_Buffer = 1
-
-    if v:version == 703 && has('patch438') || v:version > 703
-	silent doautocmd <nomodeline> User MessageRecallPreview
-    else
-	silent doautocmd              User MessageRecallPreview
-    endif
+    call ingo#event#TriggerCustom('MessageRecallPreview')
 endfunction
 
 function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirspec, range, whenRangeNoMatch, CompleteFuncref )
@@ -100,11 +97,7 @@ function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirs
 	nmap <buffer> <C-n> <Plug>(MessageRecallGoNext)
     endif
 
-    if v:version == 703 && has('patch438') || v:version > 703
-	silent doautocmd <nomodeline> User MessageRecallBuffer
-    else
-	silent doautocmd              User MessageRecallBuffer
-    endif
+    call ingo#event#TriggerCustom('MessageRecallBuffer')
 endfunction
 
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
