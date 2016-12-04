@@ -1,6 +1,7 @@
 " MessageRecall/Buffer.vim: Functionality for message buffers.
 "
 " DEPENDENCIES:
+"   - ingo/cmdargs/pattern.vim autoload script
 "   - ingo/compat.vim autoload script
 "   - ingo/err.vim autoload script
 "   - ingo/fs/path.vim autoload script
@@ -12,12 +13,15 @@
 "   - MessageRecall.vim autoload script
 "   - MessageRecall/MappingsAndCommands.vim autoload script
 "
-" Copyright: (C) 2012-2015 Ingo Karkat
+" Copyright: (C) 2012-2016 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.20.016	05-Dec-2016	Refactoring: Factor out s:GetFiles().
+"				ENH: Add implementations for new :MessageList,
+"				:MessageGrep, and :MessageVimGrep commands.
 "   1.11.015	30-Jan-2015	Move from the simplistic
 "				ingo#regexp#FromWildcard() to
 "				ingo#regexp#fromwildcard#AnchoredToPathBoundaries()
@@ -147,6 +151,7 @@ function! s:GlobMessageStores( messageStoreDirspec, expr, ... )
     return sort(l:filespecs, 's:SortByMessageFilename')
 endfunction
 function! s:SortByMessageFilename( f1, f2 )
+    " Oldest timestamp first.
     if a:f1 ==# a:f2
 	return 0
     endif
@@ -192,6 +197,18 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \           'isdirectory(v:val) ? ingo#fs#path#Combine(v:val, "") : v:val'
     \       ),
     \       'ingo#compat#fnameescape(v:val)'
+    \   )
+endfunction
+
+function! s:GetFiles( messageStoreDirspec, targetBufNr )
+    let l:messageStores = (a:targetBufNr == -1 ? [] : getbufvar(a:targetBufNr, 'MessageRecall_MessageStores'))
+    return
+    \   map(
+    \       filter(
+    \           s:GlobMessageStores(a:messageStoreDirspec, MessageRecall#Glob(), l:messageStores),
+    \           '! isdirectory(v:val)'
+    \       ),
+    \       'ingo#fs#path#Normalize(fnamemodify(v:val, ":p"))'
     \   )
 endfunction
 
@@ -382,15 +399,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
     endif
 endfunction
 function! MessageRecall#Buffer#OpenNext( messageStoreDirspec, opencmd, exFileCommands, filespec, difference, direction, targetBufNr )
-    let l:messageStores = (a:targetBufNr == -1 ? [] : getbufvar(a:targetBufNr, 'MessageRecall_MessageStores'))
-    let l:files =
-    \   map(
-    \       filter(
-    \           s:GlobMessageStores(a:messageStoreDirspec, MessageRecall#Glob(), l:messageStores),
-    \           '! isdirectory(v:val)'
-    \       ),
-    \       'ingo#fs#path#Normalize(fnamemodify(v:val, ":p"))'
-    \   )
+    let l:files = s:GetFiles(a:messageStoreDirspec, a:targetBufNr)
 
     let l:currentIndex = index(l:files, ingo#fs#path#Normalize(a:filespec))
     if l:currentIndex == -1
@@ -439,6 +448,61 @@ function! s:Open( opencmd, exFileCommands, filespec )
 	else
 	    execute a:opencmd l:exFileOptionsAndCommands ingo#compat#fnameescape(a:filespec)
 	endif
+	return 1
+    catch /^Vim\%((\a\+)\)\=:/
+	call ingo#err#SetVimException()
+	return 0
+    endtry
+endfunction
+
+function! MessageRecall#Buffer#Grep( targetBufNr, messageStoreDirspec, count, arguments )
+    let l:success = s:Grep(a:targetBufNr, a:messageStoreDirspec, a:count, 'lgrep!', a:arguments, 'ingo#compat#shellescape')
+    redraw! " The external command has messed up the screen.
+    return l:success
+endfunction
+function! MessageRecall#Buffer#VimGrep( targetBufNr, messageStoreDirspec, count, arguments )
+    " We want to pass the "j" flag to :vimgrep, so that it does not jump to the
+    " first match. As flags can only be passed to the /{pattern}/ form, we need
+    " to turn the {pattern} form into the former.
+    let l:arguments = (ingo#cmdargs#pattern#IsDelimited(a:arguments, 'g\?') ?
+    \   a:arguments :
+    \   '/' . escape(a:arguments, '/') . '/'
+    \) . 'j'
+    let l:success = s:Grep(a:targetBufNr, a:messageStoreDirspec, a:count, 'lvimgrep!', l:arguments, 'ingo#compat#fnameescape')
+    call histdel('search', -1)
+    return l:success
+endfunction
+function! s:Grep( targetBufNr, messageStoreDirspec, count, grepCommand, arguments, EscapeFunction )
+    let l:files = s:GetFiles(a:messageStoreDirspec, a:targetBufNr)
+    if (a:count > 0)
+	let l:files = l:files[(-1 * a:count):-1]
+    endif
+    try
+	silent execute a:grepCommand a:arguments join(map(reverse(l:files), empty(a:EscapeFunction) ? 'v:val' : 'call(a:EscapeFunction, [v:val])'), ' ')
+	return 1
+    catch /^Vim\%((\a\+)\)\=:/
+	call ingo#err#SetVimException()
+	return 0
+    endtry
+endfunction
+
+function! MessageRecall#Buffer#List( targetBufNr, messageStoreDirspec, count )
+    " External grep is faster, because it does not need to load each file into a
+    " Vim buffer. However, we need a POSIX grep that supports the -m /
+    " --max-count option. If that isn't the case, fall back to slower built-in
+    "  :vimgrep.
+    if &grepprg =~# '^grep '
+	let l:success = MessageRecall#Buffer#Grep(a:targetBufNr, a:messageStoreDirspec, a:count, '-m1 .')
+    else
+	let l:success = MessageRecall#Buffer#VimGrep(a:targetBufNr, a:messageStoreDirspec, a:count, '/\%^\n*\zs./')
+    endif
+
+    if ! l:success
+	return 0
+    endif
+
+    try
+	lopen
 	return 1
     catch /^Vim\%((\a\+)\)\=:/
 	call ingo#err#SetVimException()
