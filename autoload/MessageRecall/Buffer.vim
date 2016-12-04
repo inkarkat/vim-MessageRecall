@@ -22,6 +22,9 @@
 "   1.20.016	05-Dec-2016	Refactoring: Factor out s:GetFiles().
 "				ENH: Add implementations for new :MessageList,
 "				:MessageGrep, and :MessageVimGrep commands.
+"				Pass optional count (negative for newest, positive
+"				for oldest) to s:GetFiles().
+"				ENH: Add MessageRecall#Buffer#Prune().
 "   1.11.015	30-Jan-2015	Move from the simplistic
 "				ingo#regexp#FromWildcard() to
 "				ingo#regexp#fromwildcard#AnchoredToPathBoundaries()
@@ -200,9 +203,9 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \   )
 endfunction
 
-function! s:GetFiles( messageStoreDirspec, targetBufNr )
+function! s:GetFiles( messageStoreDirspec, targetBufNr, ... )
     let l:messageStores = (a:targetBufNr == -1 ? [] : getbufvar(a:targetBufNr, 'MessageRecall_MessageStores'))
-    return
+    let l:files =
     \   map(
     \       filter(
     \           s:GlobMessageStores(a:messageStoreDirspec, MessageRecall#Glob(), l:messageStores),
@@ -210,6 +213,13 @@ function! s:GetFiles( messageStoreDirspec, targetBufNr )
     \       ),
     \       'ingo#fs#path#Normalize(fnamemodify(v:val, ":p"))'
     \   )
+
+    if (a:0 && a:1 < 0)
+	let l:files = l:files[(a:1):-1]
+    elseif (a:0 && a:1 > 0)
+	let l:files = l:files[0 :(a:1 - 1)]
+    endif
+    return l:files
 endfunction
 
 function! s:GetIndexedMessageFilespec( messageStoreDirspec, index )
@@ -473,10 +483,7 @@ function! MessageRecall#Buffer#VimGrep( targetBufNr, messageStoreDirspec, count,
     return l:success
 endfunction
 function! s:Grep( targetBufNr, messageStoreDirspec, count, grepCommand, arguments, EscapeFunction )
-    let l:files = s:GetFiles(a:messageStoreDirspec, a:targetBufNr)
-    if (a:count > 0)
-	let l:files = l:files[(-1 * a:count):-1]
-    endif
+    let l:files = s:GetFiles(a:messageStoreDirspec, a:targetBufNr, -1 * a:count)
     try
 	silent execute a:grepCommand a:arguments join(map(reverse(l:files), empty(a:EscapeFunction) ? 'v:val' : 'call(a:EscapeFunction, [v:val])'), ' ')
 	return 1
@@ -508,6 +515,46 @@ function! MessageRecall#Buffer#List( targetBufNr, messageStoreDirspec, count )
 	call ingo#err#SetVimException()
 	return 0
     endtry
+endfunction
+
+function! MessageRecall#Buffer#Prune( targetBufNr, messageStoreDirspec, isForce, count, arguments )
+    if empty(a:arguments)
+	let l:files = s:GetFiles(a:messageStoreDirspec, a:targetBufNr, a:count)
+    else
+	let l:messageStores = (a:targetBufNr == -1 ? [] : getbufvar(a:targetBufNr, 'MessageRecall_MessageStores'))
+	let l:files =
+	\   map(
+	\       filter(
+	\           s:GlobMessageStores(a:messageStoreDirspec, a:arguments, l:messageStores),
+	\           '! isdirectory(v:val)'
+	\       ),
+	\       'ingo#fs#path#Normalize(fnamemodify(v:val, ":p"))'
+	\   )
+    endif
+
+    if empty(l:files)
+	call ingo#err#Set('No messages' . (empty(a:arguments) ? '' : ' matching ' . a:arguments))
+	return 0
+    endif
+
+    if ! a:isForce
+	let l:confirmationMessage = (len(l:files) == 1 ?
+	\   printf('Really delete %s?', l:files[0]) :
+	\   printf('Really delete %d messages (from %s to %s)?', len(l:files), fnamemodify(l:files[0], ':t:r'), fnamemodify(l:files[-1], ':t:r'))
+	\)
+	if confirm(l:confirmationMessage, "&Yes\n&No", 0, 'Question') != 1
+	    return 1
+	endif
+    endif
+
+    let l:deleteCnt = 0
+    for l:file in l:files
+	if delete(l:file) == 0
+	    let l:deleteCnt += 1
+	endif
+    endfor
+    call ingo#msg#StatusMsg(printf('%d message%s deleted', l:deleteCnt, (l:deleteCnt == 1 ? '' : 's')))
+    return 1
 endfunction
 
 let &cpo = s:save_cpo
