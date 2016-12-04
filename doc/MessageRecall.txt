@@ -96,12 +96,12 @@ INSIDE BOTH								     *
 			:{count}MessageRecall.)
 								*:MessageGrep*
 :[N]MessageGrep [arguments]
-			Search for [arguments] in all / the last [N] messages,
-			and set the |location-list| to the matches.
+			Search for [arguments] in all / the last [N] stored
+			messages, and set the |location-list| to the matches.
 							     *:MessageVimGrep*
 :[N]MessageVimGrep [/]{pattern}[/]
-			Search for {pattern} in all / the last [N] messages,
-			and set the |location-list| to the matches.
+			Search for {pattern} in all / the last [N] stored
+			messages, and set the |location-list| to the matches.
 
 							       *:MessageStore*
 :MessageStore[!] {identifier}|{dirspec}
@@ -112,6 +112,12 @@ INSIDE BOTH								     *
 			be referenced via their short {identifier} instead.
 :MessageStore		List all message store directories for the current
 			buffer.
+							       *:MessagePrune*
+:[N]MessagePrune[!]	Remove all / the oldest [N] messages from the message
+			store, with [!] without confirmation.
+:MessagePrune[!] {fileglob}
+			Remove all files matching {fileglob} from the message
+			store, with [!] without confirmation.
 
 ==============================================================================
 INSTALLATION					  *MessageRecall-installation*
@@ -182,14 +188,6 @@ KNOWN PROBLEMS					*MessageRecall-known-problems*
 
 TODO							  *MessageRecall-todo*
 
-								*:MessageList*
-:MessageList		Show all stored messages in the |quickfix| list,
-			starting with the most recent one.
-							     *:MessageVimGrep*
-:MessageVimGrep	[{pattern}]
-			Search all stored messages for {pattern}, and fill the
-			|quickfix| list with the matches.
-
 IDEAS							 *MessageRecall-ideas*
 
 ==============================================================================
@@ -197,6 +195,7 @@ HISTORY						       *MessageRecall-history*
 
 1.20	RELEASEME
 - ENH: Add :MessageList, :MessageGrep, and :MessageVimGrep commands.
+- ENH: Add :MessagePrune.
 - Refactoring.
   *** You need to update to ingo-library (vimscript #4433) version 1.023! ***
 
