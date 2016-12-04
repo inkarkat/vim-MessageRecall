@@ -89,6 +89,20 @@ CTRL-P, CTRL-N		Go to the previous / next stored message.
 			opened.
 
 INSIDE BOTH								     *
+								*:MessageList*
+:[N]MessageList		Show all / the last [N] messages in the
+			|location-list-window|; most recent first. (So the
+			line number directly corresponds to {count} in
+			:{count}MessageRecall.)
+								*:MessageGrep*
+:[N]MessageGrep [arguments]
+			Search for [arguments] in all / the last [N] messages,
+			and set the |location-list| to the matches.
+							     *:MessageVimGrep*
+:[N]MessageVimGrep [/]{pattern}[/]
+			Search for {pattern} in all / the last [N] messages,
+			and set the |location-list| to the matches.
+
 							       *:MessageStore*
 :MessageStore[!] {identifier}|{dirspec}
 			Add the directory {dirspec} as a source (with [!]: set
@@ -181,7 +195,8 @@ IDEAS							 *MessageRecall-ideas*
 ==============================================================================
 HISTORY						       *MessageRecall-history*
 
-1.11	RELEASEME
+1.20	RELEASEME
+- ENH: Add :MessageList, :MessageGrep, and :MessageVimGrep commands.
 - Refactoring.
   *** You need to update to ingo-library (vimscript #4433) version 1.023! ***
 
@@ -227,7 +242,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012-2015 Ingo Karkat
+Copyright: (C) 2012-2016 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
