@@ -20,8 +20,8 @@
 " REVISION	DATE		REMARKS
 "   1.11.015	30-Jan-2015	Move from the simplistic
 "				ingo#regexp#FromWildcard() to
-"				ingo#regexp#fromwildcard#Convert() to handle all
-"				wildcards.
+"				ingo#regexp#fromwildcard#AnchoredToPathBoundaries()
+"				to handle all wildcards.
 "   1.10.014	22-Sep-2014	Use ingo#compat#glob() and
 "				ingo#compat#globpath().
 "   1.10.013	15-Jul-2014	Instead of duplicating the
@@ -173,7 +173,7 @@ function! MessageRecall#Buffer#Complete( messageStoreDirspec, ArgLead )
     \           'ingo#fs#path#Combine(fnamemodify(v:val, ":p:h"), "") !=# l:messageStoreDirspecPrefix :' .
     \           '1'
     \   )
-    if len(l:otherPathOrFilespecs) > 0 && l:otherPathOrFilespecs[0] =~# ingo#regexp#fromwildcard#Convert(MessageRecall#Glob(), '')
+    if len(l:otherPathOrFilespecs) > 0 && l:otherPathOrFilespecs[0] =~# ingo#regexp#fromwildcard#AnchoredToPathBoundaries(MessageRecall#Glob(), '')
 	" Return the messages from other message stores also in reverse order,
 	" so that the latest one comes first.
 	call reverse(l:otherPathOrFilespecs)
