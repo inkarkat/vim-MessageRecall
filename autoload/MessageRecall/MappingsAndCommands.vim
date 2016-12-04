@@ -7,12 +7,14 @@
 "   - MessageRecall.vim autoload script
 "   - MessageRecall/Buffer.vim autoload script
 "
-" Copyright: (C) 2012-2015 Ingo Karkat
+" Copyright: (C) 2012-2016 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.20.010	05-Dec-2016	ENH: Add :MessageList, :MessageGrep, and
+"				:MessageVimGrep commands.
 "   1.11.009	20-Jan-2015	Use ingo#event#TriggerCustom().
 "   1.10.008	15-Jul-2014	Undo the duplication of
 "				b:MessageRecall_MessageStores and instead just
@@ -56,6 +58,10 @@
 "   1.00.001	19-Jun-2012	file creation
 
 function! s:CommonSetup( targetBufNr, messageStoreDirspec )
+    execute printf('command! -buffer -bar -count=-1 MessageList             if ! MessageRecall#Buffer#List(%d, %s, <count>) | echoerr ingo#err#Get() | endif', a:targetBufNr, string(a:messageStoreDirspec))
+    execute printf('command! -buffer -bar -count=-1 -nargs=* MessageGrep    if ! MessageRecall#Buffer#Grep(%d, %s, <count>, <q-args>) | echoerr ingo#err#Get() | endif', a:targetBufNr, string(a:messageStoreDirspec))
+    execute printf('command! -buffer -bar -count=-1 -nargs=+ MessageVimGrep if ! MessageRecall#Buffer#VimGrep(%d, %s, <count>, <q-args>) | echoerr ingo#err#Get() | endif', a:targetBufNr, string(a:messageStoreDirspec))
+
     execute printf('command! -buffer -bang -nargs=? -complete=customlist,MessageRecall#Stores#Complete MessageStore if ! MessageRecall#Stores#Set(%d, %s, <bang>0, <q-args>) | echoerr ingo#err#Get() | endif', a:targetBufNr, string(a:messageStoreDirspec))
 endfunction
 
