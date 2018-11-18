@@ -16,8 +16,8 @@ recalled from that history.
 ### SEE ALSO
 
 This plugin is used by:
-VcsMessageRecall ([vimscript #4117](http://www.vim.org/scripts/script.php?script_id=4117)): Browse and re-insert previous VCS commit
-                                    messages.
+- VcsMessageRecall.vim ([vimscript #4117](http://www.vim.org/scripts/script.php?script_id=4117)):
+  Browse and re-insert previous VCS commit messages.
 
 USAGE
 ------------------------------------------------------------------------------
@@ -181,7 +181,7 @@ https://github.com/inkarkat/vim-MessageRecall/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
-##### 1.20    RELEASEME
+##### 1.20    18-Nov-2018
 - ENH: Add :MessageList, :MessageGrep, and :MessageVimGrep commands.
 - ENH: Add :MessagePrune.
 - Refactoring.

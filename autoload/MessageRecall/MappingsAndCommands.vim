@@ -7,56 +7,10 @@
 "   - MessageRecall.vim autoload script
 "   - MessageRecall/Buffer.vim autoload script
 "
-" Copyright: (C) 2012-2016 Ingo Karkat
+" Copyright: (C) 2012-2018 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
-"
-" REVISION	DATE		REMARKS
-"   1.20.010	05-Dec-2016	ENH: Add :MessageList, :MessageGrep, and
-"				:MessageVimGrep commands.
-"				ENH: Add :MessagePrune.
-"   1.11.009	20-Jan-2015	Use ingo#event#TriggerCustom().
-"   1.10.008	15-Jul-2014	Undo the duplication of
-"				b:MessageRecall_MessageStores and instead just
-"				pass a:targetBufNr into
-"				MessageRecall#Buffer#OpenNext().
-"				Add s:CommonSetup() which defines a new
-"				:MessageStore command.
-"   1.10.007	14-Jul-2014	Also pass the messageStores configuration to
-"				MessageRecall#MappingsAndCommands#PreviewSetup()
-"				and duplicate the config to each previewed
-"				message buffer.
-"				Replace EditSimilar#Next#Open() with
-"				MessageRecall#Buffer#OpenNext().
-"   1.03.006	01-Apr-2014	Adapt to changed EditSimilar.vim interface that
-"				returns the success status now.
-"				Abort on error for own plugin commands.
-"   1.02.005	09-Aug-2013	Allow to change / disable the defined mappings
-"				by using intermediate <Plug>-mappings. This also
-"				prevents escaping issues with my buffer-local
-"				UniversalIteratorMapping iteration mode.
-"				Use ingo#escape#command#mapescape().
-"				Trigger User autocmds, e.g. to allow to easily
-"				define alternative mappings for <C-p> / <C-n>,
-"				as there's no fixed filetype one could use here.
-"   1.02.004	05-Aug-2013	Pass range and whenRangeNoMatch options to the
-"				<C-p> / <C-n> mappings, too.
-"				Mark previewed stored messages with
-"				b:MessageRecall_Buffer to be able to recognize
-"				them in MessageRecall#Buffer#Replace().
-"   1.01.003	12-Jul-2012	The :MessageRecall command in the message buffer
-"				needs access to the a:whenRangeNoMatch option.
-"   1.00.002	19-Jun-2012	Define :MessageView command in preview buffer,
-"				too, as a more discoverable alternative to
-"				CTRL-P / CTRL-N navigation.
-"				Prune unnecessary a:range argument.
-"				Pass in a:targetBufNr to
-"				MessageRecall#Buffer#Preview(), now that it is
-"				also used from inside the preview window, and do
-"				the same to MessageRecall#Buffer#Replace() for
-"				consistency.
-"   1.00.001	19-Jun-2012	file creation
 
 function! s:CommonSetup( targetBufNr, messageStoreDirspec, CompleteFuncref )
     execute printf('command! -buffer -bar -count=0 MessageList             if ! MessageRecall#Buffer#List(%d, %s, <count>) | echoerr ingo#err#Get() | endif', a:targetBufNr, string(a:messageStoreDirspec))

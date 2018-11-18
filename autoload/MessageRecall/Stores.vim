@@ -6,13 +6,10 @@
 "   - ingo/err.vim autoload script
 "   - ingo/fs/path.vim autoload script
 "
-" Copyright: (C) 2014 Ingo Karkat
+" Copyright: (C) 2014-2018 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
-"
-" REVISION	DATE		REMARKS
-"   1.10.001	15-Jul-2014	file creation
 
 function! s:GetConfiguredMessageStores()
     let l:stores = {}
