@@ -6,34 +6,10 @@
 "   - MessageRecall/MappingsAndCommands.vim autoload script
 "   - ingo/fs/path.vim autoload script
 "
-" Copyright: (C) 2012-2013 Ingo Karkat
+" Copyright: (C) 2012-2018 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
-"
-" REVISION	DATE		REMARKS
-"   1.02.004	01-Jun-2013	Move ingofile.vim into ingo-library.
-"   1.01.003	12-Jul-2012	The :MessageRecall command in the message buffer
-"				needs access to the a:whenRangeNoMatch option.
-"   1.00.006	24-Jun-2012	Change filename template from "message" to the
-"				shorter "msg"; it's just as descriptive, and
-"				shortness is helpful when typing and completing
-"				filenames.
-"   1.00.005	20-Jun-2012	Change API to pass optional a:options, like
-"				BufferPersist does. Right now all options are
-"				forwarded to it, anyway.
-"   1.00.004	19-Jun-2012	Rename :MessagePreview to :MessageView, as the
-"				former hints at previewing the current commit
-"				message, not viewing older messages.
-"				Extract mapping and command setup to
-"				MessagRecall/MappingsAndCommands.vim.
-"   1.00.003	18-Jun-2012	Due to a change in the BufferPersist API, the
-"				messageStoreFunction must now take a bufNr
-"				argument.
-"				FIX: Actually use MessageRecall#MessageStore().
-"	002	12-Jun-2012	Split off BufferPersist functionality from
-"				the original MessageRecall plugin.
-"	001	09-Jun-2012	file creation
 let s:save_cpo = &cpo
 set cpo&vim
 
