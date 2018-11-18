@@ -16,8 +16,8 @@ recalled from that history.
 ### SEE ALSO
 
 This plugin is used by:
-VcsMessageRecall ([vimscript #4117](http://www.vim.org/scripts/script.php?script_id=4117)): Browse and re-insert previous VCS commit
-                                    messages.
+- VcsMessageRecall.vim ([vimscript #4117](http://www.vim.org/scripts/script.php?script_id=4117)):
+  Browse and re-insert previous VCS commit messages.
 
 USAGE
 ------------------------------------------------------------------------------
