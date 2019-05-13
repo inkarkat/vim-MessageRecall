@@ -6,10 +6,12 @@
 "   - ingo/err.vim autoload script
 "   - ingo/fs/path.vim autoload script
 "
-" Copyright: (C) 2014-2018 Ingo Karkat
+" Copyright: (C) 2014-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! s:GetConfiguredMessageStores()
     let l:stores = {}
@@ -21,13 +23,23 @@ function! s:GetConfiguredMessageStores()
     endif
     return l:stores
 endfunction
-function! s:GetIdentifiers()
-    return keys(s:GetConfiguredMessageStores())
+function! s:SortByLastUpdatedMessageStore( m1, m2 )
+    return ingo#collections#FileModificationTimeSort(a:m1[1], a:m2[1])
 endfunction
 function! MessageRecall#Stores#Complete( ArgLead, CmdLine, CursorPos )
     " Initially offer only identifiers from the configuration. If there's a lead
     " (or no identifiers), complete first identifiers and then dirspecs.
-    let l:identifiers = sort(filter(s:GetIdentifiers(), 'v:val =~ "\\V\\^" . escape(a:ArgLead, "\\")'))
+    let l:identifiers =
+    \   map(
+    \       sort(
+    \           filter(
+    \               items(s:GetConfiguredMessageStores()),
+    \               'v:val[0] =~ "\\V\\^" . escape(a:ArgLead, "\\")'
+    \           ),
+    \           's:SortByLastUpdatedMessageStore'
+    \       ),
+    \       'v:val[0]'
+    \   )
     if empty(a:ArgLead) && ! empty(l:identifiers)
 	return l:identifiers
     endif
@@ -98,4 +110,6 @@ function! MessageRecall#Stores#Set( targetBufNr, messageStoreDirspec, isReplace,
     return 1
 endfunction
 
+let &cpo = s:save_cpo
+unlet s:save_cpo
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
