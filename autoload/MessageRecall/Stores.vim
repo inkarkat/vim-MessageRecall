@@ -87,7 +87,14 @@ function! MessageRecall#Stores#Set( targetBufNr, messageStoreDirspec, isReplace,
 
 
     let l:messageStores = s:GetConfiguredMessageStores()
-    if has_key(l:messageStores, a:argument)
+    if a:argument =~# '^\d\+$'
+	let l:store = get(sort(items(l:messageStores), 's:SortByLastUpdatedMessageStore'), str2nr(a:argument) - 1, '')
+	if empty(l:store)
+	    call ingo#err#Set(printf('Only %d message store%s available', len(l:messageStores), (len(l:messageStores) == 1 ? '' : 's')))
+	    return 0
+	endif
+	let l:dirspec = l:store[1]
+    elseif has_key(l:messageStores, a:argument)
 	let l:dirspec = l:messageStores[a:argument]
     elseif isdirectory(a:argument)
 	let l:dirspec = a:argument
