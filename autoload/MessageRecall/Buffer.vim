@@ -1,19 +1,9 @@
 " MessageRecall/Buffer.vim: Functionality for message buffers.
 "
 " DEPENDENCIES:
-"   - ingo/cmdargs/pattern.vim autoload script
-"   - ingo/compat.vim autoload script
-"   - ingo/err.vim autoload script
-"   - ingo/fs/path.vim autoload script
-"   - ingo/msg.vim autoload script
-"   - ingo/plugin.vim autoload script
-"   - ingo/range.vim autoload script
-"   - ingo/regexp/fromwildcard.vim autoload script
-"   - ingo/window/preview.vim autoload script
-"   - MessageRecall.vim autoload script
-"   - MessageRecall/MappingsAndCommands.vim autoload script
+"   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2018 Ingo Karkat
+" Copyright: (C) 2012-2020 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>

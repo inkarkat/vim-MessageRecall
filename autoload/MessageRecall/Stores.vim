@@ -1,12 +1,9 @@
 " MessageRecall/Stores.vim: Choosing the message stores.
 "
 " DEPENDENCIES:
-"   - MessageRecall/Buffer.vim autoload script
-"   - ingo/compat.vim autoload script
-"   - ingo/err.vim autoload script
-"   - ingo/fs/path.vim autoload script
+"   - ingo-library.vim plugin
 "
-" Copyright: (C) 2014-2019 Ingo Karkat
+" Copyright: (C) 2014-2020 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
