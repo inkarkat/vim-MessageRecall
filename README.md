@@ -182,7 +182,7 @@ https://github.com/inkarkat/vim-MessageRecall/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
-##### 1.30    RELEASEME
+##### 1.30    23-Feb-2020
 - ENH: Sort the :MessageStore completion candidates for configured message
   stores by last modification time (instead of alphabetically by identifier),
   so stores that were recently updated come first.
@@ -241,7 +241,7 @@ __You need to separately
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2012-2019 Ingo Karkat -
+Copyright: (C) 2012-2020 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
