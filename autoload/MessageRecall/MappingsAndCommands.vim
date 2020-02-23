@@ -1,13 +1,9 @@
 " MessageRecall/MappingsAndCommands.vim: Setup for message buffer and preview.
 "
 " DEPENDENCIES:
-"   - ingo/err.vim autoload script
-"   - ingo/escape/command.vim autoload script
-"   - ingo/event.vim autoload script
-"   - MessageRecall.vim autoload script
-"   - MessageRecall/Buffer.vim autoload script
+"   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2018 Ingo Karkat
+" Copyright: (C) 2012-2020 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>

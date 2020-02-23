@@ -1,4 +1,4 @@
-MESSAGE RECALL   
+MESSAGE RECALL
 ===============================================================================
 _by Ingo Karkat_
 
@@ -87,12 +87,13 @@ USAGE
                             Search for {pattern} in all / the last [N] stored
                             messages, and set the location-list to the matches.
 
-    :MessageStore[!] {identifier}|{dirspec}
+    :MessageStore[!] {dirspec}| {identifier}|N
                             Add the directory {dirspec} as a source (with [!]: set
-                            as the sole source) for recalled messages. If message
-                            stores have been preconfigured (cp.
+                            as the sole source) for recalled messages.
+                            If message stores have been preconfigured (cp.
                             g:MessageRecall_ConfiguredMessageStores), these can
-                            be referenced via their short {identifier} instead.
+                            be referenced via their short {identifier} instead, or
+                            by the N'th last accessed message store .
     :MessageStore           List all message store directories for the current
                             buffer.
 
@@ -124,7 +125,7 @@ To uninstall, use the :RmVimball command.
 ### DEPENDENCIES
 
 - Requires Vim 7.0 or higher.
-- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.023 or
+- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.038 or
   higher.
 - Requires the BufferPersist plugin ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115)).
 
@@ -181,11 +182,18 @@ https://github.com/inkarkat/vim-MessageRecall/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
+##### 1.30    23-Feb-2020
+- ENH: Sort the :MessageStore completion candidates for configured message
+  stores by last modification time (instead of alphabetically by identifier),
+  so stores that were recently updated come first.
+- ENH: Allow :MessageStore referencing via N count of configured stores, too.
+
 ##### 1.20    18-Nov-2018
 - ENH: Add :MessageList, :MessageGrep, and :MessageVimGrep commands.
 - ENH: Add :MessagePrune.
 - Refactoring.
-  __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.023!__
+
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.023!__
 
 ##### 1.10    23-Dec-2014
 - ENH: For :MessageRecall command completion, return the messages from other
@@ -197,26 +205,30 @@ HISTORY
   Presets can be configured via the new
   b:MessageRecall\_ConfiguredMessageStores variable.
 - Use ingo#compat#glob() and ingo#compat#globpath().
-  __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.022!__
+
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.022!__
   The dependency to the EditSimilar.vim plugin has been dropped.
 
 ##### 1.03    16-Apr-2014
 - Adapt to changed EditSimilar.vim interface that returns the success status
   now. Abort on error for own plugin commands.
-  __You need to update to EditSimilar.vim ([vimscript #2544](http://www.vim.org/scripts/script.php?script_id=2544)) version 2.40!__
+
+__You need to update to EditSimilar.vim ([vimscript #2544](http://www.vim.org/scripts/script.php?script_id=2544)) version 2.40!__
 
 ##### 1.02    21-Nov-2013
-- CHG: Only replace on <C-p> / <C-n> in the message buffer when the considered
+- CHG: Only replace on &lt;C-p&gt; / &lt;C-n&gt; in the message buffer when the considered
   range is just empty lines. I came to dislike the previous replacement also
   when the message had been persisted.
-- CHG: On <C-p> / <C-n> in the original message buffer: When the buffer is
+- CHG: On &lt;C-p&gt; / &lt;C-n&gt; in the original message buffer: When the buffer is
   modified and a stored message is already being previewed, change the
   semantics of count to be interpreted relative to the currently previewed
-  stored message. Beforehand, one had to use increasing <C-p>, 2<C-p>, 3<C-p>,
+  stored message. Beforehand, one had to use increasing &lt;C-p&gt;, 2&lt;C-p&gt;, 3&lt;C-p&gt;,
   etc. to iterate through stored messages (or go to the preview window and
   invoke the mapping there).
-- ENH: Allow to override the default <C-p> / <C-n> mappings.
-- Add dependency to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)). __You need to separately
+- ENH: Allow to override the default &lt;C-p&gt; / &lt;C-n&gt; mappings.
+- Add dependency to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)).
+
+__You need to separately
   install ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.012 (or higher)!__
 
 ##### 1.01    12-Jul-2012
@@ -229,7 +241,7 @@ HISTORY
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2012-2018 Ingo Karkat -
+Copyright: (C) 2012-2020 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
-Maintainer:     Ingo Karkat <ingo@karkat.de>
+Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;

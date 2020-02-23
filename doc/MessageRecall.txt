@@ -104,12 +104,13 @@ INSIDE BOTH								     *
 			messages, and set the |location-list| to the matches.
 
 							       *:MessageStore*
-:MessageStore[!] {identifier}|{dirspec}
+:MessageStore[!] {dirspec}| {identifier}|N
 			Add the directory {dirspec} as a source (with [!]: set
-			as the sole source) for recalled messages. If message
-			stores have been preconfigured (cp.
+			as the sole source) for recalled messages.
+			If message stores have been preconfigured (cp.
 			|g:MessageRecall_ConfiguredMessageStores|), these can
-			be referenced via their short {identifier} instead.
+			be referenced via their short {identifier} instead, or
+			by the N'th last accessed message store .
 :MessageStore		List all message store directories for the current
 			buffer.
 							       *:MessagePrune*
@@ -139,7 +140,7 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES					  *MessageRecall-dependencies*
 
 - Requires Vim 7.0 or higher.
-- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.023 or
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.038 or
   higher.
 - Requires the BufferPersist plugin (vimscript #4115).
 
@@ -204,6 +205,12 @@ https://github.com/inkarkat/vim-MessageRecall/issues or email (address below).
 ==============================================================================
 HISTORY						       *MessageRecall-history*
 
+1.30	23-Feb-2020
+- ENH: Sort the :MessageStore completion candidates for configured message
+  stores by last modification time (instead of alphabetically by identifier),
+  so stores that were recently updated come first.
+- ENH: Allow :MessageStore referencing via N count of configured stores, too.
+
 1.20	18-Nov-2018
 - ENH: Add :MessageList, :MessageGrep, and :MessageVimGrep commands.
 - ENH: Add :MessagePrune.
@@ -252,7 +259,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012-2018 Ingo Karkat
+Copyright: (C) 2012-2020 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
