@@ -1,12 +1,10 @@
 " MessageRecall.vim: Browse and re-insert previous (commit, status) messages.
 "
 " DEPENDENCIES:
-"   - BufferPersist.vim autoload script
-"   - MessageRecall/Buffer.vim autoload script
-"   - MessageRecall/MappingsAndCommands.vim autoload script
-"   - ingo/fs/path.vim autoload script
+"   - BufferPersist.vim plugin
+"   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2018 Ingo Karkat
+" Copyright: (C) 2012-2020 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
