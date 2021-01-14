@@ -4,7 +4,7 @@
 "   - BufferPersist.vim plugin
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2020 Ingo Karkat
+" Copyright: (C) 2012-2021 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -58,7 +58,7 @@ function! MessageRecall#GetFuncrefs( messageStoreDirspec )
 endfunction
 
 let s:autocmds = {}
-function! s:SetupAutocmds( messageStoreDirspec )
+function! s:SetupAutocmds( messageStoreDirspec, subDirForUserProvidedDirspec )
     " When a stored message is opened via :MessageView, settings like
     " filetype and the setup of the mappings and commands is handled
     " by the command itself. But when a stored message is opened through other
@@ -70,7 +70,7 @@ function! s:SetupAutocmds( messageStoreDirspec )
 	augroup MessageRecall
 	    execute printf('autocmd BufRead %s %s',
 	    \   ingo#fs#path#Combine(a:messageStoreDirspec, MessageRecall#Glob()),
-	    \   MessageRecall#Buffer#GetPreviewCommands(-1, &l:filetype)
+	    \   MessageRecall#Buffer#GetPreviewCommands(-1, &l:filetype, a:subDirForUserProvidedDirspec)
 	    \)
 	augroup END
 
@@ -110,6 +110,12 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
 "				persisted
 "				"all": the entire buffer is persisted instead
 "				Default is "error"
+"   a:options.subDirForUserProvidedDirspec
+"                           Try {dirspec}/{subDirForUserProvidedDirspec} when
+"                           the user executes :MessageStore {dirspec} (before
+"                           falling back to {dirspec}, so that the user can pass
+"                           the base directory instead of remembering where
+"                           exactly the messages are stored internally.
 "* RETURN VALUES:
 "   None.
 "******************************************************************************
@@ -126,8 +132,9 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
 
     let l:range = get(l:options, 'range', '')
     let l:whenRangeNoMatch = get(l:options, 'whenRangeNoMatch', 'error')
-    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, l:range, l:whenRangeNoMatch, l:CompleteFuncref)
-    call s:SetupAutocmds(l:messageStoreDirspec)
+    let l:subDirForUserProvidedDirspec = get(l:options, 'subDirForUserProvidedDirspec', '')
+    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, l:range, l:whenRangeNoMatch, l:subDirForUserProvidedDirspec, l:CompleteFuncref)
+    call s:SetupAutocmds(l:messageStoreDirspec, l:subDirForUserProvidedDirspec)
 endfunction
 
 let &cpo = s:save_cpo

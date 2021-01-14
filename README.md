@@ -182,6 +182,11 @@ https://github.com/inkarkat/vim-MessageRecall/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
+##### 1.40    RELEASEME
+- ENH: Add a:options.subDirForUserProvidedDirspec so that the user can pass
+  the base directory instead of remembering where exactly the messages are
+  stored internally.
+
 ##### 1.30    23-Feb-2020
 - ENH: Sort the :MessageStore completion candidates for configured message
   stores by last modification time (instead of alphabetically by identifier),
@@ -241,7 +246,7 @@ __You need to separately
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2012-2020 Ingo Karkat -
+Copyright: (C) 2012-2021 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;

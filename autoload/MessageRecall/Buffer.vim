@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2020 Ingo Karkat
+" Copyright: (C) 2012-2021 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -228,25 +228,25 @@ function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
     endtry
     return 1
 endfunction
-function! MessageRecall#Buffer#GetPreviewCommands( targetBufNr, filetype )
+function! MessageRecall#Buffer#GetPreviewCommands( targetBufNr, filetype, subDirForUserProvidedDirspec )
     " Pass the target buffer number to enable the mappings and commands in the
     " previewed buffer to access a buffer local message stores configuration.
     return
-    \	printf('call MessageRecall#MappingsAndCommands#PreviewSetup(%d,%s)', a:targetBufNr, string(a:filetype)) .
+    \	printf('call MessageRecall#MappingsAndCommands#PreviewSetup(%d,%s,%s)', a:targetBufNr, string(a:filetype), string(a:subDirForUserProvidedDirspec)) .
     \	'|setlocal readonly' .
     \   (empty(a:filetype) ? '' : printf('|setf %s', a:filetype))
 endfunction
-function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStoreDirspec, targetBufNr )
+function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStoreDirspec, targetBufNr, subDirForUserProvidedDirspec )
     let l:index = (a:isPrevious ? -1 * a:count : a:count - 1)
     let l:filespec = s:GetMessageFilespec(l:index, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
 	return 0    " Message has been set by s:GetMessageFilespec().
     endif
 
-    return s:Open('', MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), l:filespec)
+    return s:Open('', MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype, a:subDirForUserProvidedDirspec), l:filespec)
 endfunction
 
-function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, targetBufNr )
+function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, targetBufNr, subDirForUserProvidedDirspec )
     if exists('b:MessageRecall_ChangedTick') && b:MessageRecall_ChangedTick == b:changedtick
 	" Replace again in the original message buffer.
 	return MessageRecall#Buffer#OpenNext(
@@ -278,12 +278,12 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	if ! l:previewWinNr || ! getbufvar(l:previewBufNr, 'MessageRecall_Buffer')
 	    " No stored message previewed yet: Open the a:count'th previous /
 	    " first stored message in the preview window.
-	    return MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:targetBufNr)
+	    return MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:targetBufNr, a:subDirForUserProvidedDirspec)
 	else
 	    " DWIM: The semantics of a:count are interpreted relative to the currently previewed stored message.
 	    return MessageRecall#Buffer#OpenNext(
 	    \   a:messageStoreDirspec,
-	    \   '', MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype),
+	    \   '', MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype, a:subDirForUserProvidedDirspec),
 	    \   fnamemodify(bufname(l:previewBufNr), ':p'),
 	    \   a:count,
 	    \   (a:isPrevious ? -1 : 1),

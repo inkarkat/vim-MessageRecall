@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2014-2020 Ingo Karkat
+" Copyright: (C) 2014-2021 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -64,7 +64,7 @@ function! s:GetExistingMessageStores( messageStoreDirspec, targetBufNr )
 
     return map(l:messageStores, 'MessageRecall#Buffer#ExtendMessageStore(a:messageStoreDirspec, v:val)')
 endfunction
-function! MessageRecall#Stores#Set( targetBufNr, messageStoreDirspec, isReplace, argument )
+function! MessageRecall#Stores#Set( targetBufNr, messageStoreDirspec, subDirForUserProvidedDirspec, isReplace, argument )
     if empty(a:argument)
 	let l:messageStores = s:GetExistingMessageStores(a:messageStoreDirspec, a:targetBufNr)
 	if empty(l:messageStores)
@@ -93,6 +93,8 @@ function! MessageRecall#Stores#Set( targetBufNr, messageStoreDirspec, isReplace,
 	let l:dirspec = l:store[1]
     elseif has_key(l:messageStores, a:argument)
 	let l:dirspec = l:messageStores[a:argument]
+    elseif ! empty(a:subDirForUserProvidedDirspec) && isdirectory(ingo#fs#path#Combine(a:argument, a:subDirForUserProvidedDirspec))
+	let l:dirspec = ingo#fs#path#Combine(a:argument, a:subDirForUserProvidedDirspec)
     elseif isdirectory(a:argument)
 	let l:dirspec = a:argument
     else
