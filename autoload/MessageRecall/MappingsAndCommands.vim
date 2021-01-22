@@ -13,7 +13,7 @@ function! s:CommonSetup( targetBufNr, messageStoreDirspec, subDirForUserProvided
     execute printf('command! -buffer -bar -count=0 -nargs=* MessageGrep    if ! MessageRecall#Buffer#Grep(%d, %s, <count>, <q-args>) | echoerr ingo#err#Get() | endif', a:targetBufNr, string(a:messageStoreDirspec))
     execute printf('command! -buffer -bar -count=0 -nargs=+ MessageVimGrep if ! MessageRecall#Buffer#VimGrep(%d, %s, <count>, <q-args>) | echoerr ingo#err#Get() | endif', a:targetBufNr, string(a:messageStoreDirspec))
 
-    execute printf('command! -buffer -bang -nargs=? -complete=customlist,MessageRecall#Stores#Complete MessageStore if ! MessageRecall#Stores#Set(%d, %s, %s, <bang>0, <q-args>) | echoerr ingo#err#Get() | endif', a:targetBufNr, string(a:messageStoreDirspec), string(a:subDirForUserProvidedDirspec))
+    execute printf('command! -buffer -bang -nargs=? -complete=customlist,MessageRecall#Stores#Complete MessageStore if ! MessageRecall#Stores#Set(%d, %s, %s, <bang>0, ingo#str#Trim(<q-args>)) | echoerr ingo#err#Get() | endif', a:targetBufNr, string(a:messageStoreDirspec), string(a:subDirForUserProvidedDirspec))
     execute printf('command! -buffer -bang -count=0 -nargs=? -complete=customlist,%s MessagePrune if ! MessageRecall#Buffer#Prune(%d, %s, <bang>0, <count>, <q-args>) | echoerr ingo#err#Get() | endif', a:CompleteFuncref, a:targetBufNr, string(a:messageStoreDirspec))
 endfunction
 
