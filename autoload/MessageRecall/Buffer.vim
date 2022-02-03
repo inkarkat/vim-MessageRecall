@@ -11,7 +11,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 function! MessageRecall#Buffer#ExtendMessageStore( messageStoreDirspec, messageStore )
-    return (empty(v:val) ? a:messageStoreDirspec : ingo#fs#path#Normalize(fnamemodify(v:val, ":p")))
+    return (empty(v:val) ? a:messageStoreDirspec : ingo#fs#path#Normalize(fnamemodify(v:val, ':p')))
 endfunction
 function! s:GlobMessageStores( messageStoreDirspec, expr, ... )
     let l:messageStores = (a:0 && ! empty(a:1) ? a:1 : map(

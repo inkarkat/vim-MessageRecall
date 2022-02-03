@@ -51,7 +51,7 @@ function! MessageRecall#GetFuncrefs( messageStoreDirspec )
 	\   l:completeFunctionName,
 	\   string(a:messageStoreDirspec)
 	\)
-	let s:funcrefs[a:messageStoreDirspec] = [function(s:function(messageStoreFunctionName)), s:function(completeFunctionName)]
+	let s:funcrefs[a:messageStoreDirspec] = [function(s:function(l:messageStoreFunctionName)), s:function(l:completeFunctionName)]
     endif
 
     return s:funcrefs[a:messageStoreDirspec]
