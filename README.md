@@ -127,7 +127,7 @@ To uninstall, use the :RmVimball command.
 - Requires Vim 7.0 or higher.
 - Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.038 or
   higher.
-- Requires the BufferPersist plugin ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115)).
+- Requires the BufferPersist.vim plugin ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115)).
 
 CONFIGURATION
 ------------------------------------------------------------------------------
