@@ -186,6 +186,9 @@ HISTORY
 - ENH: Add a:options.subDirForUserProvidedDirspec so that the user can pass
   the base directory instead of remembering where exactly the messages are
   stored internally.
+- ENH: Add a:options.ignorePattern to be able to skip persisting boilerplate
+  messages and discard and replace them with a recalled message instead of
+  opening in the preview window. Useful e.g. for "Merge branch 'foo'".
 
 ##### 1.30    23-Feb-2020
 - ENH: Sort the :MessageStore completion candidates for configured message
@@ -246,7 +249,7 @@ __You need to separately
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2012-2021 Ingo Karkat -
+Copyright: (C) 2012-2022 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
