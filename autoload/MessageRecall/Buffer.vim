@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2021 Ingo Karkat
+" Copyright: (C) 2012-2022 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -140,13 +140,16 @@ endfunction
 function! s:GetRange( range )
     return (empty(a:range) ? '%' : a:range)
 endfunction
+function! s:IsEmpty( rangeContents ) abort
+    return a:rangeContents =~# '^\n*$'
+endfunction
 function! s:IsReplace( range, whenRangeNoMatch )
     let l:isReplace = 0
     try
-	let l:isReplace = (ingo#range#Get(a:range) =~# '^\n*$')
+	let l:isReplace = s:IsEmpty(ingo#range#Get(a:range))
     catch /^Vim\%((\a\+)\)\=:/
 	if a:whenRangeNoMatch ==# 'all'
-	    let l:isReplace = (ingo#range#Get('%') =~# '^\n*$')
+	    let l:isReplace = s:IsEmpty(ingo#range#Get('%'))
 	endif
     endtry
     return l:isReplace
