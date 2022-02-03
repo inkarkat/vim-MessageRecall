@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2021 Ingo Karkat
+" Copyright: (C) 2012-2022 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -39,16 +39,16 @@ function! MessageRecall#MappingsAndCommands#PreviewSetup( targetBufNr, filetype,
     call ingo#event#TriggerCustom('MessageRecallPreview')
 endfunction
 
-function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirspec, range, whenRangeNoMatch, subDirForUserProvidedDirspec, CompleteFuncref )
+function! MessageRecall#MappingsAndCommands#MessageBufferSetup( messageStoreDirspec, range, whenRangeNoMatch, ignorePattern, subDirForUserProvidedDirspec, CompleteFuncref )
     let l:targetBufNr = bufnr('')
 
     call s:CommonSetup(l:targetBufNr, a:messageStoreDirspec, a:subDirForUserProvidedDirspec, a:CompleteFuncref)
 
-    execute printf('command! -buffer -bang -count=1 -nargs=? -complete=customlist,%s MessageRecall  if ! MessageRecall#Buffer#Recall(<bang>0, <count>, <q-args>, %s, %s, %s) | echoerr ingo#err#Get() | endif', a:CompleteFuncref, string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch))
+    execute printf('command! -buffer -bang -count=1 -nargs=? -complete=customlist,%s MessageRecall  if ! MessageRecall#Buffer#Recall(<bang>0, <count>, <q-args>, %s, %s, %s, %s) | echoerr ingo#err#Get() | endif', a:CompleteFuncref, string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch), string(a:ignorePattern))
     execute printf('command! -buffer       -count=1 -nargs=? -complete=customlist,%s MessageView    if ! MessageRecall#Buffer#Preview(1, <count>, <q-args>, %s, %d, %s) | echoerr ingo#err#Get() | endif', a:CompleteFuncref, string(a:messageStoreDirspec), l:targetBufNr, string(a:subDirForUserProvidedDirspec))
 
-    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallGoPrev) :<C-u>call MessageRecall#Buffer#Replace(1, v:count1, %s, %s, %s, %d, %s)<CR>', string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch), l:targetBufNr, string(a:subDirForUserProvidedDirspec))
-    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallGoNext) :<C-u>call MessageRecall#Buffer#Replace(0, v:count1, %s, %s, %s, %d, %s)<CR>', string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch), l:targetBufNr, string(a:subDirForUserProvidedDirspec))
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallGoPrev) :<C-u>call MessageRecall#Buffer#Replace(1, v:count1, %s, %s, %s, %s, %d, %s)<CR>', string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch), string(a:ignorePattern), l:targetBufNr, string(a:subDirForUserProvidedDirspec))
+    execute printf('nnoremap <silent> <buffer> <Plug>(MessageRecallGoNext) :<C-u>call MessageRecall#Buffer#Replace(0, v:count1, %s, %s, %s, %s, %d, %s)<CR>', string(a:messageStoreDirspec), string(a:range), string(a:whenRangeNoMatch), string(a:ignorePattern), l:targetBufNr, string(a:subDirForUserProvidedDirspec))
     if ! hasmapto('<Plug>(MessageRecallGoPrev)', 'n')
 	nmap <buffer> <C-p> <Plug>(MessageRecallGoPrev)
     endif

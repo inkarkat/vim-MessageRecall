@@ -4,7 +4,7 @@
 "   - BufferPersist.vim plugin
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2021 Ingo Karkat
+" Copyright: (C) 2012-2022 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -110,6 +110,9 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
 "				persisted
 "				"all": the entire buffer is persisted instead
 "				Default is "error"
+"   a:options.ignorePattern If the (joined) text in the persisted range / buffer
+"                           matches the pattern, it is treated as if empty and
+"                           not persisted.
 "   a:options.subDirForUserProvidedDirspec
 "                           Try {dirspec}/{subDirForUserProvidedDirspec} when
 "                           the user executes :MessageStore {dirspec} (before
@@ -133,7 +136,8 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
     let l:range = get(l:options, 'range', '')
     let l:whenRangeNoMatch = get(l:options, 'whenRangeNoMatch', 'error')
     let l:subDirForUserProvidedDirspec = get(l:options, 'subDirForUserProvidedDirspec', '')
-    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, l:range, l:whenRangeNoMatch, l:subDirForUserProvidedDirspec, l:CompleteFuncref)
+    let l:ignorePattern = get(l:options, 'ignorePattern', '')
+    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, l:range, l:whenRangeNoMatch, l:ignorePattern, l:subDirForUserProvidedDirspec, l:CompleteFuncref)
     call s:SetupAutocmds(l:messageStoreDirspec, l:subDirForUserProvidedDirspec)
 endfunction
 
