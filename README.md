@@ -189,6 +189,7 @@ HISTORY
 - ENH: Add a:options.ignorePattern to be able to skip persisting boilerplate
   messages and discard and replace them with a recalled message instead of
   opening in the preview window. Useful e.g. for "Merge branch 'foo'".
+- BUG: Need to escape more arguments in the defined mappings.
 
 ##### 1.30    23-Feb-2020
 - ENH: Sort the :MessageStore completion candidates for configured message
