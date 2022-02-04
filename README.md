@@ -33,17 +33,15 @@ USAGE
     After setup, the following mappings and commands are available in the current
     message buffer:
 
-    CTRL-P, CTRL-N          When the buffer has no unsaved changes: Replace the
-                            edited message with a [count]'th previous / next
-                            stored message.
-                            When the buffer is modified: Open the [count]'th
+    CTRL-P, CTRL-N          When the buffer has had no changes yet: Replace with a
+                            [count]'th previous / next stored message.
+                            When the buffer has been modified: Open the [count]'th
                             previous / first stored message in the preview window.
-                            When the buffer is modified and a stored message is
-                            already being previewed: Open the [count]'th previous
-                            / next stored message there.
+                            When the buffer is modified and a stored message has
+                            already been inserted: Replace it with the [count]'th
+                            previous / next stored message there.
 
-    :[count]MessageView
-                            View the [count]'th previous stored message in the
+    :[count]MessageView     View the [count]'th previous stored message in the
                             preview-window.
     :MessageView {message}|{filespec}
                             View {message} (auto-completed from the message store
@@ -58,11 +56,13 @@ USAGE
                             store directory) or any arbitrary {filespec} contents
                             below the current line.
 
-                            When the existing message consists of just empty
-                            lines (originating from the message template that the
-                            tool invoking Vim has put there), the inserted message
-                            replaces those empty lines. With [!]: Replace an
-                            existing message with the inserted one.
+                            When the existing message consists of just empty (or
+                            ignored boilerplate) lines (originating from the
+                            message template that the tool invoking Vim has put
+                            there), the inserted message replaces those empty
+                            lines.
+                            With [!]: Replace an existing message with the
+                            inserted one.
 
 ### INSIDE A MESSAGE PREVIEW WINDOW
 
