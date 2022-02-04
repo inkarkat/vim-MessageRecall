@@ -156,7 +156,7 @@ function! s:IsReplace( range, whenRangeNoMatch, ignorePattern )
     endtry
     return l:isReplace
 endfunction
-function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern )
+function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister )
     let l:filespec = s:GetMessageFilespec(-1 * a:count, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
 	return 0    " Message has been set by s:GetMessageFilespec().
@@ -166,7 +166,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
     let l:insertPoint = '.'
     if a:isReplace || s:IsReplace(l:range, a:whenRangeNoMatch, a:ignorePattern)
 	try
-	    silent execute l:range . 'delete _'
+	    silent execute l:range . 'delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
 	    let b:MessageRecall_Filespec = fnamemodify(l:filespec, ':p')
 	    " After the deletion, the cursor is on the following line. Prepend
 	    " before that.
@@ -179,7 +179,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 		" Append instead of replacing.
 	    elseif a:whenRangeNoMatch ==# 'all'
 		" Replace the entire buffer instead.
-		silent %delete _
+		silent execute '%delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
 		let b:MessageRecall_Filespec = fnamemodify(l:filespec, ':p')
 		let l:insertPoint = '0'
 	    else
@@ -251,7 +251,7 @@ function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStor
     return s:Open('', MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype, a:subDirForUserProvidedDirspec), l:filespec)
 endfunction
 
-function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern, targetBufNr, subDirForUserProvidedDirspec )
+function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister, targetBufNr, subDirForUserProvidedDirspec )
     if exists('b:MessageRecall_ChangedTick') && b:MessageRecall_ChangedTick == b:changedtick
 	" Replace again in the original message buffer.
 	return MessageRecall#Buffer#OpenNext(
@@ -264,7 +264,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	\)
     elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch, a:ignorePattern)
 	" Replace for the first time in the original message buffer.
-	return MessageRecall#Buffer#Recall(1, a:isPrevious ? a:count : (-1 * (a:count - 1)), '', a:messageStoreDirspec, a:range, a:whenRangeNoMatch, a:ignorePattern)
+	return MessageRecall#Buffer#Recall(1, a:isPrevious ? a:count : (-1 * (a:count - 1)), '', a:messageStoreDirspec, a:range, a:whenRangeNoMatch, a:ignorePattern, a:replacedMessageRegister)
     else
 	" Show in preview window.
 	let l:previewWinNr = ingo#window#preview#IsPreviewWindowVisible()
