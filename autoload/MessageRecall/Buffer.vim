@@ -264,18 +264,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	\)
     elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch, a:ignorePattern)
 	" Replace for the first time in the original message buffer.
-	let l:filespec = s:GetIndexedMessageFilespec(a:messageStoreDirspec, a:isPrevious ? (-1 * a:count) : (a:count - 1))
-	if empty(l:filespec)
-	    return 0    " Message has been set by s:GetIndexedMessageFilespec().
-	endif
-
-	try
-	    execute 'MessageRecall!' ingo#compat#fnameescape(l:filespec)
-	catch /^Vim\%((\a\+)\)\=:/
-	    call ingo#err#SetVimException()
-	    return 0
-	endtry
-	return 1
+	return MessageRecall#Buffer#Recall(1, a:isPrevious ? a:count : (-1 * (a:count - 1)), '', a:messageStoreDirspec, a:range, a:whenRangeNoMatch, a:ignorePattern)
     else
 	" Show in preview window.
 	let l:previewWinNr = ingo#window#preview#IsPreviewWindowVisible()
