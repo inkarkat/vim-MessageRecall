@@ -161,13 +161,15 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
     if empty(l:filespec)
 	return 0    " Message has been set by s:GetMessageFilespec().
     endif
-
+    return s:ReplaceWithFilespec(a:isReplace, l:filespec, a:range, a:whenRangeNoMatch, a:ignorePattern, a:replacedMessageRegister)
+endfunction
+function! s:ReplaceWithFilespec( isReplace, filespec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister )
     let l:range = s:GetRange(a:range)
     let l:insertPoint = '.'
     if a:isReplace || s:IsReplace(l:range, a:whenRangeNoMatch, a:ignorePattern)
 	try
 	    silent execute l:range . 'delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
-	    let b:MessageRecall_Filespec = fnamemodify(l:filespec, ':p')
+	    let b:MessageRecall_Filespec = fnamemodify(a:filespec, ':p')
 	    " After the deletion, the cursor is on the following line. Prepend
 	    " before that.
 	    let l:insertPoint = line('.') - 1
@@ -180,7 +182,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 	    elseif a:whenRangeNoMatch ==# 'all'
 		" Replace the entire buffer instead.
 		silent execute '%delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
-		let b:MessageRecall_Filespec = fnamemodify(l:filespec, ':p')
+		let b:MessageRecall_Filespec = fnamemodify(a:filespec, ':p')
 		let l:insertPoint = '0'
 	    else
 		throw 'ASSERT: Invalid value for a:whenRangeNoMatch: ' . string(a:whenRangeNoMatch)
@@ -188,7 +190,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 	endtry
     endif
 
-    execute 'keepalt' l:insertPoint . 'read' ingo#compat#fnameescape(l:filespec)
+    execute 'keepalt' l:insertPoint . 'read' ingo#compat#fnameescape(a:filespec)
 
     if ('' . l:insertPoint) !=# '.'
 	let b:MessageRecall_ChangedTick = b:changedtick
