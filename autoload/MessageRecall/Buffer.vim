@@ -256,14 +256,19 @@ endfunction
 function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister, targetBufNr, subDirForUserProvidedDirspec )
     if exists('b:MessageRecall_ChangedTick') && b:MessageRecall_ChangedTick == b:changedtick
 	" Replace again in the original message buffer.
-	return MessageRecall#Buffer#OpenNext(
+	let l:replacementFilespec = MessageRecall#Buffer#OpenNext(
 	\   a:messageStoreDirspec,
-	\   'MessageRecall!', '',
+	\   'return', '',
 	\   b:MessageRecall_Filespec,
 	\   a:count,
 	\   (a:isPrevious ? -1 : 1),
 	\   -1
 	\)
+	return (l:replacementFilespec is# 0 ?
+	\   0 :
+	\   s:ReplaceWithFilespec(1, l:replacementFilespec, a:range, a:whenRangeNoMatch, a:ignorePattern, '')
+	\)
+	" Do not use a:replacedMessageRegister here, as we're replacing a previous recalled message, not original buffer contents.
     elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch, a:ignorePattern)
 	" Replace for the first time in the original message buffer.
 	return MessageRecall#Buffer#Recall(1, a:isPrevious ? a:count : (-1 * (a:count - 1)), '', a:messageStoreDirspec, a:range, a:whenRangeNoMatch, a:ignorePattern, a:replacedMessageRegister)
@@ -325,7 +330,10 @@ function! MessageRecall#Buffer#OpenNext( messageStoreDirspec, opencmd, exFileCom
 
     " Note: The a:isCreateNew flag has no meaning here, as all replacement
     " files do already exist.
-    return s:Open(a:opencmd, a:exFileCommands, l:replacementFilespec)
+    return (a:opencmd ==# 'return' ?
+    \   l:replacementFilespec :
+    \   s:Open(a:opencmd, a:exFileCommands, l:replacementFilespec)
+    \)
 endfunction
 function! s:Open( opencmd, exFileCommands, filespec )
     let l:exFileOptionsAndCommands = (empty(a:exFileCommands) ? '' : '+' . escape(a:exFileCommands, ' \'))
