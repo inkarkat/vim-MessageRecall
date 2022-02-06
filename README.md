@@ -190,6 +190,9 @@ HISTORY
   messages and discard and replace them with a recalled message instead of
   opening in the preview window. Useful e.g. for "Merge branch 'foo'".
 - BUG: Need to escape more arguments in the defined mappings.
+- ENH: Add a:options.replacedMessageRegister to save the original edited
+  message when it is replaced (via :MessageRecall! or when it matches
+  a:options.ignorePattern).
 
 ##### 1.30    23-Feb-2020
 - ENH: Sort the :MessageStore completion candidates for configured message

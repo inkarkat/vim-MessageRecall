@@ -156,18 +156,20 @@ function! s:IsReplace( range, whenRangeNoMatch, ignorePattern )
     endtry
     return l:isReplace
 endfunction
-function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern )
+function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister )
     let l:filespec = s:GetMessageFilespec(-1 * a:count, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
 	return 0    " Message has been set by s:GetMessageFilespec().
     endif
-
+    return s:ReplaceWithFilespec(a:isReplace, l:filespec, a:range, a:whenRangeNoMatch, a:ignorePattern, a:replacedMessageRegister)
+endfunction
+function! s:ReplaceWithFilespec( isReplace, filespec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister )
     let l:range = s:GetRange(a:range)
     let l:insertPoint = '.'
     if a:isReplace || s:IsReplace(l:range, a:whenRangeNoMatch, a:ignorePattern)
 	try
-	    silent execute l:range . 'delete _'
-	    let b:MessageRecall_Filespec = fnamemodify(l:filespec, ':p')
+	    silent execute l:range . 'delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
+	    let b:MessageRecall_Filespec = fnamemodify(a:filespec, ':p')
 	    " After the deletion, the cursor is on the following line. Prepend
 	    " before that.
 	    let l:insertPoint = line('.') - 1
@@ -179,8 +181,8 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 		" Append instead of replacing.
 	    elseif a:whenRangeNoMatch ==# 'all'
 		" Replace the entire buffer instead.
-		silent %delete _
-		let b:MessageRecall_Filespec = fnamemodify(l:filespec, ':p')
+		silent execute '%delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
+		let b:MessageRecall_Filespec = fnamemodify(a:filespec, ':p')
 		let l:insertPoint = '0'
 	    else
 		throw 'ASSERT: Invalid value for a:whenRangeNoMatch: ' . string(a:whenRangeNoMatch)
@@ -188,7 +190,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 	endtry
     endif
 
-    execute 'keepalt' l:insertPoint . 'read' ingo#compat#fnameescape(l:filespec)
+    execute 'keepalt' l:insertPoint . 'read' ingo#compat#fnameescape(a:filespec)
 
     if ('' . l:insertPoint) !=# '.'
 	let b:MessageRecall_ChangedTick = b:changedtick
@@ -251,31 +253,25 @@ function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStor
     return s:Open('', MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype, a:subDirForUserProvidedDirspec), l:filespec)
 endfunction
 
-function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern, targetBufNr, subDirForUserProvidedDirspec )
+function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister, targetBufNr, subDirForUserProvidedDirspec )
     if exists('b:MessageRecall_ChangedTick') && b:MessageRecall_ChangedTick == b:changedtick
 	" Replace again in the original message buffer.
-	return MessageRecall#Buffer#OpenNext(
+	let l:replacementFilespec = MessageRecall#Buffer#OpenNext(
 	\   a:messageStoreDirspec,
-	\   'MessageRecall!', '',
+	\   'return', '',
 	\   b:MessageRecall_Filespec,
 	\   a:count,
 	\   (a:isPrevious ? -1 : 1),
 	\   -1
 	\)
+	return (l:replacementFilespec is# 0 ?
+	\   0 :
+	\   s:ReplaceWithFilespec(1, l:replacementFilespec, a:range, a:whenRangeNoMatch, a:ignorePattern, '')
+	\)
+	" Do not use a:replacedMessageRegister here, as we're replacing a previous recalled message, not original buffer contents.
     elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch, a:ignorePattern)
 	" Replace for the first time in the original message buffer.
-	let l:filespec = s:GetIndexedMessageFilespec(a:messageStoreDirspec, a:isPrevious ? (-1 * a:count) : (a:count - 1))
-	if empty(l:filespec)
-	    return 0    " Message has been set by s:GetIndexedMessageFilespec().
-	endif
-
-	try
-	    execute 'MessageRecall!' ingo#compat#fnameescape(l:filespec)
-	catch /^Vim\%((\a\+)\)\=:/
-	    call ingo#err#SetVimException()
-	    return 0
-	endtry
-	return 1
+	return MessageRecall#Buffer#Recall(1, a:isPrevious ? a:count : (-1 * (a:count - 1)), '', a:messageStoreDirspec, a:range, a:whenRangeNoMatch, a:ignorePattern, a:replacedMessageRegister)
     else
 	" Show in preview window.
 	let l:previewWinNr = ingo#window#preview#IsPreviewWindowVisible()
@@ -334,7 +330,10 @@ function! MessageRecall#Buffer#OpenNext( messageStoreDirspec, opencmd, exFileCom
 
     " Note: The a:isCreateNew flag has no meaning here, as all replacement
     " files do already exist.
-    return s:Open(a:opencmd, a:exFileCommands, l:replacementFilespec)
+    return (a:opencmd ==# 'return' ?
+    \   l:replacementFilespec :
+    \   s:Open(a:opencmd, a:exFileCommands, l:replacementFilespec)
+    \)
 endfunction
 function! s:Open( opencmd, exFileCommands, filespec )
     let l:exFileOptionsAndCommands = (empty(a:exFileCommands) ? '' : '+' . escape(a:exFileCommands, ' \'))

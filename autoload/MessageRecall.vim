@@ -113,6 +113,11 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
 "   a:options.ignorePattern If the (joined) text in the persisted range / buffer
 "                           matches the pattern, it is treated as if empty and
 "                           not persisted.
+"   a:options.replacedMessageRegister
+"                           If the current message buffer's edited message is
+"                           replaced by a previous / next stored message, save
+"                           it in the passed register; it is not saved by
+"                           default or when it is empty.
 "   a:options.subDirForUserProvidedDirspec
 "                           Try {dirspec}/{subDirForUserProvidedDirspec} when
 "                           the user executes :MessageStore {dirspec} (before
@@ -137,7 +142,8 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
     let l:whenRangeNoMatch = get(l:options, 'whenRangeNoMatch', 'error')
     let l:subDirForUserProvidedDirspec = get(l:options, 'subDirForUserProvidedDirspec', '')
     let l:ignorePattern = get(l:options, 'ignorePattern', '')
-    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, l:range, l:whenRangeNoMatch, l:ignorePattern, l:subDirForUserProvidedDirspec, l:CompleteFuncref)
+    let l:replacedMessageRegister = get(l:options, 'replacedMessageRegister', '')
+    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, l:range, l:whenRangeNoMatch, l:ignorePattern, l:replacedMessageRegister, l:subDirForUserProvidedDirspec, l:CompleteFuncref)
     call s:SetupAutocmds(l:messageStoreDirspec, l:subDirForUserProvidedDirspec)
 endfunction
 
