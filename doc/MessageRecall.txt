@@ -79,6 +79,12 @@ CTRL-P, CTRL-N		When the buffer has had no changes yet: Replace with a
 			With [!]: Replace an existing message with the
 			inserted one.
 
+							       *:MessageWrite*
+:[range]MessageWrite	Persist the current message / specified lines in
+			[range]; normally, this is done automatically when Vim
+			is done editing the buffer, but it can be useful to
+			store an intermediate state (e.g. before a complete
+			rewrite or before aborting the current edit).
 
 INSIDE A MESSAGE PREVIEW WINDOW						     *
 						 *MessageRecall-preview-usage*
@@ -142,7 +148,8 @@ DEPENDENCIES					  *MessageRecall-dependencies*
 - Requires Vim 7.0 or higher.
 - Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.038 or
   higher.
-- Requires the |BufferPersist.vim| plugin (vimscript #4115).
+- Requires the |BufferPersist.vim| plugin (vimscript #4115), version 1.10 or
+  higher.
 
 ==============================================================================
 CONFIGURATION					 *MessageRecall-configuration*
@@ -216,6 +223,9 @@ HISTORY						       *MessageRecall-history*
 - ENH: Add a:options.replacedMessageRegister to save the original edited
   message when it is replaced (via :MessageRecall! or when it matches
   a:options.ignorePattern).
+- ENH: Define :MessageWrite command to store an intermediate message state on
+  demand. *** You need to update to BufferPersist.vim (vimscript #4115)
+  version 1.10 to get that! ***
 
 1.30	23-Feb-2020
 - ENH: Sort the :MessageStore completion candidates for configured message

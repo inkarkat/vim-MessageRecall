@@ -64,6 +64,12 @@ USAGE
                             With [!]: Replace an existing message with the
                             inserted one.
 
+    :[range]MessageWrite    Persist the current message / specified lines in
+                            [range]; normally, this is done automatically when Vim
+                            is done editing the buffer, but it can be useful to
+                            store an intermediate state (e.g. before a complete
+                            rewrite or before aborting the current edit).
+
 ### INSIDE A MESSAGE PREVIEW WINDOW
 
     CTRL-P, CTRL-N          Go to the previous / next stored message.
@@ -127,7 +133,8 @@ To uninstall, use the :RmVimball command.
 - Requires Vim 7.0 or higher.
 - Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.038 or
   higher.
-- Requires the BufferPersist.vim plugin ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115)).
+- Requires the BufferPersist.vim plugin ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115)), version 1.10 or
+  higher.
 
 CONFIGURATION
 ------------------------------------------------------------------------------
@@ -193,6 +200,11 @@ HISTORY
 - ENH: Add a:options.replacedMessageRegister to save the original edited
   message when it is replaced (via :MessageRecall! or when it matches
   a:options.ignorePattern).
+- ENH: Define :MessageWrite command to store an intermediate message state on
+  demand.
+
+__You need to update to BufferPersist.vim ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115))
+  version 1.10 to get that!__
 
 ##### 1.30    23-Feb-2020
 - ENH: Sort the :MessageStore completion candidates for configured message

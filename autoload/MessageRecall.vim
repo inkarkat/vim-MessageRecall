@@ -110,6 +110,15 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
 "				persisted
 "				"all": the entire buffer is persisted instead
 "				Default is "error"
+"   a:options.writeCommandName  The plugin defines a buffer-local :MessageWrite
+"                               command that persists the current buffer
+"                               contents (or just the passed :[range]). If the
+"                               buffer is changed after that, it will again be
+"                               persisted when editing is done. This enables the
+"                               user to store intermediate snapshots of the
+"                               message. If you don't want that or want a
+"                               different name, set this option (to an empty
+"                               String / the desired command name).
 "   a:options.ignorePattern If the (joined) text in the persisted range / buffer
 "                           matches the pattern, it is treated as if empty and
 "                           not persisted.
@@ -135,7 +144,12 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
     let l:messageStoreDirspec = ingo#fs#path#Normalize(a:messageStoreDirspec)
     let [l:MessageStoreFuncref, l:CompleteFuncref] = MessageRecall#GetFuncrefs(l:messageStoreDirspec)
 
-    let l:options = (a:0 ? a:1 : {})
+    let l:options = {
+    \   'writeCommandName': 'MessageWrite',
+    \}
+    if a:0
+	call extend(l:options, a:1, 'force')
+    endif
     call BufferPersist#Setup(l:MessageStoreFuncref, l:options)
 
     let l:range = get(l:options, 'range', '')
