@@ -97,7 +97,6 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
 "* INPUTS:
 "   a:messageStoreDirspec   Storage directory for the messages. The directory
 "			    will be created if it doesn't exist yet.
-"   a:options               Optional Dictionary with configuration:
 "   a:options.range         A |:range| expression limiting the lines of the
 "			    buffer that should be persisted. This can be used to
 "			    filter away some content. Default is "", which
