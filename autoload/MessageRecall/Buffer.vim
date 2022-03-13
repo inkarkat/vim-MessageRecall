@@ -168,7 +168,7 @@ function! s:ReplaceWithFilespec( isReplace, filespec, range, whenRangeNoMatch, i
     let l:insertPoint = '.'
     if a:isReplace || s:IsReplace(l:range, a:whenRangeNoMatch, a:ignorePattern)
 	try
-	    silent execute l:range . 'delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
+	    silent execute ingo#compat#commands#keeppatterns() l:range . 'delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
 	    let b:MessageRecall_Filespec = fnamemodify(a:filespec, ':p')
 	    " After the deletion, the cursor is on the following line. Prepend
 	    " before that.

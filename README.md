@@ -131,7 +131,7 @@ To uninstall, use the :RmVimball command.
 ### DEPENDENCIES
 
 - Requires Vim 7.0 or higher.
-- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.038 or
+- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.043 or
   higher.
 - Requires the BufferPersist.vim plugin ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115)), version 1.10 or
   higher.
@@ -205,6 +205,10 @@ HISTORY
 
 __You need to update to BufferPersist.vim ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115))
   version 1.10 to get that!__
+- Don't add the range to the search history (if it consists of a
+  :/{pattern}/).
+
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.043!__
 
 ##### 1.30    23-Feb-2020
 - ENH: Sort the :MessageStore completion candidates for configured message
