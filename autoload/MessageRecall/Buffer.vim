@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2020 Ingo Karkat
+" Copyright: (C) 2012-2022 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -11,7 +11,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 function! MessageRecall#Buffer#ExtendMessageStore( messageStoreDirspec, messageStore )
-    return (empty(v:val) ? a:messageStoreDirspec : ingo#fs#path#Normalize(fnamemodify(v:val, ":p")))
+    return (empty(v:val) ? a:messageStoreDirspec : ingo#fs#path#Normalize(fnamemodify(v:val, ':p')))
 endfunction
 function! s:GlobMessageStores( messageStoreDirspec, expr, ... )
     let l:messageStores = (a:0 && ! empty(a:1) ? a:1 : map(
@@ -140,29 +140,36 @@ endfunction
 function! s:GetRange( range )
     return (empty(a:range) ? '%' : a:range)
 endfunction
-function! s:IsReplace( range, whenRangeNoMatch )
+function! s:IsEmpty( rangeContents, ignorePattern ) abort
+    return (a:rangeContents =~# '^\n*$' ||
+    \   (! empty(a:ignorePattern) && a:rangeContents =~# a:ignorePattern)
+    \)
+endfunction
+function! s:IsReplace( range, whenRangeNoMatch, ignorePattern )
     let l:isReplace = 0
     try
-	let l:isReplace = (ingo#range#Get(a:range) =~# '^\n*$')
+	let l:isReplace = s:IsEmpty(ingo#range#Get(a:range), a:ignorePattern)
     catch /^Vim\%((\a\+)\)\=:/
 	if a:whenRangeNoMatch ==# 'all'
-	    let l:isReplace = (ingo#range#Get('%') =~# '^\n*$')
+	    let l:isReplace = s:IsEmpty(ingo#range#Get('%'), a:ignorePattern)
 	endif
     endtry
     return l:isReplace
 endfunction
-function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range, whenRangeNoMatch )
+function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister )
     let l:filespec = s:GetMessageFilespec(-1 * a:count, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
 	return 0    " Message has been set by s:GetMessageFilespec().
     endif
-
+    return s:ReplaceWithFilespec(a:isReplace, l:filespec, a:range, a:whenRangeNoMatch, a:ignorePattern, a:replacedMessageRegister)
+endfunction
+function! s:ReplaceWithFilespec( isReplace, filespec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister )
     let l:range = s:GetRange(a:range)
     let l:insertPoint = '.'
-    if a:isReplace || s:IsReplace(l:range, a:whenRangeNoMatch)
+    if a:isReplace || s:IsReplace(l:range, a:whenRangeNoMatch, a:ignorePattern)
 	try
-	    silent execute l:range . 'delete _'
-	    let b:MessageRecall_Filespec = fnamemodify(l:filespec, ':p')
+	    silent execute ingo#compat#commands#keeppatterns() l:range . 'delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
+	    let b:MessageRecall_Filespec = fnamemodify(a:filespec, ':p')
 	    " After the deletion, the cursor is on the following line. Prepend
 	    " before that.
 	    let l:insertPoint = line('.') - 1
@@ -174,8 +181,8 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 		" Append instead of replacing.
 	    elseif a:whenRangeNoMatch ==# 'all'
 		" Replace the entire buffer instead.
-		silent %delete _
-		let b:MessageRecall_Filespec = fnamemodify(l:filespec, ':p')
+		silent execute '%delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
+		let b:MessageRecall_Filespec = fnamemodify(a:filespec, ':p')
 		let l:insertPoint = '0'
 	    else
 		throw 'ASSERT: Invalid value for a:whenRangeNoMatch: ' . string(a:whenRangeNoMatch)
@@ -183,7 +190,7 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
 	endtry
     endif
 
-    execute 'keepalt' l:insertPoint . 'read' ingo#compat#fnameescape(l:filespec)
+    execute 'keepalt' l:insertPoint . 'read' ingo#compat#fnameescape(a:filespec)
 
     if ('' . l:insertPoint) !=# '.'
 	let b:MessageRecall_ChangedTick = b:changedtick
@@ -228,49 +235,43 @@ function! MessageRecall#Buffer#PreviewRecall( bang, targetBufNr )
     endtry
     return 1
 endfunction
-function! MessageRecall#Buffer#GetPreviewCommands( targetBufNr, filetype )
+function! MessageRecall#Buffer#GetPreviewCommands( targetBufNr, filetype, subDirForUserProvidedDirspec )
     " Pass the target buffer number to enable the mappings and commands in the
     " previewed buffer to access a buffer local message stores configuration.
     return
-    \	printf('call MessageRecall#MappingsAndCommands#PreviewSetup(%d,%s)', a:targetBufNr, string(a:filetype)) .
+    \	printf('call MessageRecall#MappingsAndCommands#PreviewSetup(%d,%s,%s)', a:targetBufNr, string(a:filetype), string(a:subDirForUserProvidedDirspec)) .
     \	'|setlocal readonly' .
     \   (empty(a:filetype) ? '' : printf('|setf %s', a:filetype))
 endfunction
-function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStoreDirspec, targetBufNr )
+function! MessageRecall#Buffer#Preview( isPrevious, count, filespec, messageStoreDirspec, targetBufNr, subDirForUserProvidedDirspec )
     let l:index = (a:isPrevious ? -1 * a:count : a:count - 1)
     let l:filespec = s:GetMessageFilespec(l:index, a:filespec, a:messageStoreDirspec)
     if empty(l:filespec)
 	return 0    " Message has been set by s:GetMessageFilespec().
     endif
 
-    return s:Open('', MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype), l:filespec)
+    return s:Open('', MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype, a:subDirForUserProvidedDirspec), l:filespec)
 endfunction
 
-function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, targetBufNr )
+function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister, targetBufNr, subDirForUserProvidedDirspec )
     if exists('b:MessageRecall_ChangedTick') && b:MessageRecall_ChangedTick == b:changedtick
 	" Replace again in the original message buffer.
-	return MessageRecall#Buffer#OpenNext(
+	let l:replacementFilespec = MessageRecall#Buffer#OpenNext(
 	\   a:messageStoreDirspec,
-	\   'MessageRecall!', '',
+	\   'return', '',
 	\   b:MessageRecall_Filespec,
 	\   a:count,
 	\   (a:isPrevious ? -1 : 1),
 	\   -1
 	\)
-    elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch)
+	return (l:replacementFilespec is# 0 ?
+	\   0 :
+	\   s:ReplaceWithFilespec(1, l:replacementFilespec, a:range, a:whenRangeNoMatch, a:ignorePattern, '')
+	\)
+	" Do not use a:replacedMessageRegister here, as we're replacing a previous recalled message, not original buffer contents.
+    elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch, a:ignorePattern)
 	" Replace for the first time in the original message buffer.
-	let l:filespec = s:GetIndexedMessageFilespec(a:messageStoreDirspec, a:isPrevious ? (-1 * a:count) : (a:count - 1))
-	if empty(l:filespec)
-	    return 0    " Message has been set by s:GetIndexedMessageFilespec().
-	endif
-
-	try
-	    execute 'MessageRecall!' ingo#compat#fnameescape(l:filespec)
-	catch /^Vim\%((\a\+)\)\=:/
-	    call ingo#err#SetVimException()
-	    return 0
-	endtry
-	return 1
+	return MessageRecall#Buffer#Recall(1, a:isPrevious ? a:count : (-1 * (a:count - 1)), '', a:messageStoreDirspec, a:range, a:whenRangeNoMatch, a:ignorePattern, a:replacedMessageRegister)
     else
 	" Show in preview window.
 	let l:previewWinNr = ingo#window#preview#IsPreviewWindowVisible()
@@ -278,12 +279,12 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	if ! l:previewWinNr || ! getbufvar(l:previewBufNr, 'MessageRecall_Buffer')
 	    " No stored message previewed yet: Open the a:count'th previous /
 	    " first stored message in the preview window.
-	    return MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:targetBufNr)
+	    return MessageRecall#Buffer#Preview(a:isPrevious, a:count, '', a:messageStoreDirspec, a:targetBufNr, a:subDirForUserProvidedDirspec)
 	else
 	    " DWIM: The semantics of a:count are interpreted relative to the currently previewed stored message.
 	    return MessageRecall#Buffer#OpenNext(
 	    \   a:messageStoreDirspec,
-	    \   '', MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype),
+	    \   '', MessageRecall#Buffer#GetPreviewCommands(a:targetBufNr, &l:filetype, a:subDirForUserProvidedDirspec),
 	    \   fnamemodify(bufname(l:previewBufNr), ':p'),
 	    \   a:count,
 	    \   (a:isPrevious ? -1 : 1),
@@ -329,7 +330,10 @@ function! MessageRecall#Buffer#OpenNext( messageStoreDirspec, opencmd, exFileCom
 
     " Note: The a:isCreateNew flag has no meaning here, as all replacement
     " files do already exist.
-    return s:Open(a:opencmd, a:exFileCommands, l:replacementFilespec)
+    return (a:opencmd ==# 'return' ?
+    \   l:replacementFilespec :
+    \   s:Open(a:opencmd, a:exFileCommands, l:replacementFilespec)
+    \)
 endfunction
 function! s:Open( opencmd, exFileCommands, filespec )
     let l:exFileOptionsAndCommands = (empty(a:exFileCommands) ? '' : '+' . escape(a:exFileCommands, ' \'))

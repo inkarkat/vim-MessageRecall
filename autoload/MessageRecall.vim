@@ -4,7 +4,7 @@
 "   - BufferPersist.vim plugin
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2020 Ingo Karkat
+" Copyright: (C) 2012-2022 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -51,14 +51,14 @@ function! MessageRecall#GetFuncrefs( messageStoreDirspec )
 	\   l:completeFunctionName,
 	\   string(a:messageStoreDirspec)
 	\)
-	let s:funcrefs[a:messageStoreDirspec] = [function(s:function(messageStoreFunctionName)), s:function(completeFunctionName)]
+	let s:funcrefs[a:messageStoreDirspec] = [function(s:function(l:messageStoreFunctionName)), s:function(l:completeFunctionName)]
     endif
 
     return s:funcrefs[a:messageStoreDirspec]
 endfunction
 
 let s:autocmds = {}
-function! s:SetupAutocmds( messageStoreDirspec )
+function! s:SetupAutocmds( messageStoreDirspec, subDirForUserProvidedDirspec )
     " When a stored message is opened via :MessageView, settings like
     " filetype and the setup of the mappings and commands is handled
     " by the command itself. But when a stored message is opened through other
@@ -70,7 +70,7 @@ function! s:SetupAutocmds( messageStoreDirspec )
 	augroup MessageRecall
 	    execute printf('autocmd BufRead %s %s',
 	    \   ingo#fs#path#Combine(a:messageStoreDirspec, MessageRecall#Glob()),
-	    \   MessageRecall#Buffer#GetPreviewCommands(-1, &l:filetype)
+	    \   MessageRecall#Buffer#GetPreviewCommands(-1, &l:filetype, a:subDirForUserProvidedDirspec)
 	    \)
 	augroup END
 
@@ -97,7 +97,6 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
 "* INPUTS:
 "   a:messageStoreDirspec   Storage directory for the messages. The directory
 "			    will be created if it doesn't exist yet.
-"   a:options               Optional Dictionary with configuration:
 "   a:options.range         A |:range| expression limiting the lines of the
 "			    buffer that should be persisted. This can be used to
 "			    filter away some content. Default is "", which
@@ -110,6 +109,29 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
 "				persisted
 "				"all": the entire buffer is persisted instead
 "				Default is "error"
+"   a:options.writeCommandName  The plugin defines a buffer-local :MessageWrite
+"                               command that persists the current buffer
+"                               contents (or just the passed :[range]). If the
+"                               buffer is changed after that, it will again be
+"                               persisted when editing is done. This enables the
+"                               user to store intermediate snapshots of the
+"                               message. If you don't want that or want a
+"                               different name, set this option (to an empty
+"                               String / the desired command name).
+"   a:options.ignorePattern If the (joined) text in the persisted range / buffer
+"                           matches the pattern, it is treated as if empty and
+"                           not persisted.
+"   a:options.replacedMessageRegister
+"                           If the current message buffer's edited message is
+"                           replaced by a previous / next stored message, save
+"                           it in the passed register; it is not saved by
+"                           default or when it is empty.
+"   a:options.subDirForUserProvidedDirspec
+"                           Try {dirspec}/{subDirForUserProvidedDirspec} when
+"                           the user executes :MessageStore {dirspec} (before
+"                           falling back to {dirspec}, so that the user can pass
+"                           the base directory instead of remembering where
+"                           exactly the messages are stored internally.
 "* RETURN VALUES:
 "   None.
 "******************************************************************************
@@ -121,13 +143,21 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
     let l:messageStoreDirspec = ingo#fs#path#Normalize(a:messageStoreDirspec)
     let [l:MessageStoreFuncref, l:CompleteFuncref] = MessageRecall#GetFuncrefs(l:messageStoreDirspec)
 
-    let l:options = (a:0 ? a:1 : {})
+    let l:options = {
+    \   'writeCommandName': 'MessageWrite',
+    \}
+    if a:0
+	call extend(l:options, a:1, 'force')
+    endif
     call BufferPersist#Setup(l:MessageStoreFuncref, l:options)
 
     let l:range = get(l:options, 'range', '')
     let l:whenRangeNoMatch = get(l:options, 'whenRangeNoMatch', 'error')
-    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, l:range, l:whenRangeNoMatch, l:CompleteFuncref)
-    call s:SetupAutocmds(l:messageStoreDirspec)
+    let l:subDirForUserProvidedDirspec = get(l:options, 'subDirForUserProvidedDirspec', '')
+    let l:ignorePattern = get(l:options, 'ignorePattern', '')
+    let l:replacedMessageRegister = get(l:options, 'replacedMessageRegister', '')
+    call MessageRecall#MappingsAndCommands#MessageBufferSetup(l:messageStoreDirspec, l:range, l:whenRangeNoMatch, l:ignorePattern, l:replacedMessageRegister, l:subDirForUserProvidedDirspec, l:CompleteFuncref)
+    call s:SetupAutocmds(l:messageStoreDirspec, l:subDirForUserProvidedDirspec)
 endfunction
 
 let &cpo = s:save_cpo

@@ -33,17 +33,15 @@ USAGE
     After setup, the following mappings and commands are available in the current
     message buffer:
 
-    CTRL-P, CTRL-N          When the buffer has no unsaved changes: Replace the
-                            edited message with a [count]'th previous / next
-                            stored message.
-                            When the buffer is modified: Open the [count]'th
+    CTRL-P, CTRL-N          When the buffer has had no changes yet: Replace with a
+                            [count]'th previous / next stored message.
+                            When the buffer has been modified: Open the [count]'th
                             previous / first stored message in the preview window.
-                            When the buffer is modified and a stored message is
-                            already being previewed: Open the [count]'th previous
-                            / next stored message there.
+                            When the buffer is modified and a stored message has
+                            already been inserted: Replace it with the [count]'th
+                            previous / next stored message there.
 
-    :[count]MessageView
-                            View the [count]'th previous stored message in the
+    :[count]MessageView     View the [count]'th previous stored message in the
                             preview-window.
     :MessageView {message}|{filespec}
                             View {message} (auto-completed from the message store
@@ -58,11 +56,19 @@ USAGE
                             store directory) or any arbitrary {filespec} contents
                             below the current line.
 
-                            When the existing message consists of just empty
-                            lines (originating from the message template that the
-                            tool invoking Vim has put there), the inserted message
-                            replaces those empty lines. With [!]: Replace an
-                            existing message with the inserted one.
+                            When the existing message consists of just empty (or
+                            ignored boilerplate) lines (originating from the
+                            message template that the tool invoking Vim has put
+                            there), the inserted message replaces those empty
+                            lines.
+                            With [!]: Replace an existing message with the
+                            inserted one.
+
+    :[range]MessageWrite    Persist the current message / specified lines in
+                            [range]; normally, this is done automatically when Vim
+                            is done editing the buffer, but it can be useful to
+                            store an intermediate state (e.g. before a complete
+                            rewrite or before aborting the current edit).
 
 ### INSIDE A MESSAGE PREVIEW WINDOW
 
@@ -125,9 +131,10 @@ To uninstall, use the :RmVimball command.
 ### DEPENDENCIES
 
 - Requires Vim 7.0 or higher.
-- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.038 or
+- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.043 or
   higher.
-- Requires the BufferPersist plugin ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115)).
+- Requires the BufferPersist.vim plugin ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115)), version 1.10 or
+  higher.
 
 CONFIGURATION
 ------------------------------------------------------------------------------
@@ -181,6 +188,27 @@ https://github.com/inkarkat/vim-MessageRecall/issues or email (address below).
 
 HISTORY
 ------------------------------------------------------------------------------
+
+##### 1.40    03-Oct-2024
+- ENH: Add a:options.subDirForUserProvidedDirspec so that the user can pass
+  the base directory instead of remembering where exactly the messages are
+  stored internally.
+- ENH: Add a:options.ignorePattern to be able to skip persisting boilerplate
+  messages and discard and replace them with a recalled message instead of
+  opening in the preview window. Useful e.g. for "Merge branch 'foo'".
+- BUG: Need to escape more arguments in the defined mappings.
+- ENH: Add a:options.replacedMessageRegister to save the original edited
+  message when it is replaced (via :MessageRecall! or when it matches
+  a:options.ignorePattern).
+- ENH: Define :MessageWrite command to store an intermediate message state on
+  demand.
+
+__You need to update to BufferPersist.vim ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115))
+  version 1.10 to get that!__
+- Don't add the range to the search history (if it consists of a
+  :/{pattern}/).
+
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.043!__
 
 ##### 1.30    23-Feb-2020
 - ENH: Sort the :MessageStore completion candidates for configured message
@@ -241,7 +269,7 @@ __You need to separately
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2012-2020 Ingo Karkat -
+Copyright: (C) 2012-2024 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
