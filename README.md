@@ -189,7 +189,7 @@ https://github.com/inkarkat/vim-MessageRecall/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
-##### 1.40    RELEASEME
+##### 1.40    03-Oct-2024
 - ENH: Add a:options.subDirForUserProvidedDirspec so that the user can pass
   the base directory instead of remembering where exactly the messages are
   stored internally.
@@ -269,7 +269,7 @@ __You need to separately
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2012-2022 Ingo Karkat -
+Copyright: (C) 2012-2024 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
