@@ -133,7 +133,7 @@ To uninstall, use the :RmVimball command.
 - Requires Vim 7.0 or higher.
 - Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.043 or
   higher.
-- Requires the BufferPersist.vim plugin ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115)), version 1.10 or
+- Requires the BufferPersist.vim plugin ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115)), version 1.11 or
   higher.
 
 CONFIGURATION
@@ -193,6 +193,8 @@ HISTORY
 - ENH: Enable support for excluding Git message trailers (and similar):
   a:options.range can also be a List of range expressions; the first matching
   range will be used. A range of a single empty line will not be deleted.
+
+__You need to update to BufferPersist.vim ([vimscript #4115](http://www.vim.org/scripts/script.php?script_id=4115)) version 1.11!__
 
 ##### 1.40    03-Oct-2024
 - ENH: Add a:options.subDirForUserProvidedDirspec so that the user can pass
