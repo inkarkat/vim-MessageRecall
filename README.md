@@ -189,6 +189,11 @@ https://github.com/inkarkat/vim-MessageRecall/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
+##### 1.50    RELEASEME
+- ENH: Enable support for excluding Git message trailers (and similar):
+  a:options.range can also be a List of range expressions; the first matching
+  range will be used. A range of a single empty line will not be deleted.
+
 ##### 1.40    03-Oct-2024
 - ENH: Add a:options.subDirForUserProvidedDirspec so that the user can pass
   the base directory instead of remembering where exactly the messages are

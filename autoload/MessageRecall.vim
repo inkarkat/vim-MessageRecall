@@ -4,7 +4,7 @@
 "   - BufferPersist.vim plugin
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2022 Ingo Karkat
+" Copyright: (C) 2012-2024 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -97,10 +97,11 @@ function! MessageRecall#Setup( messageStoreDirspec, ... )
 "* INPUTS:
 "   a:messageStoreDirspec   Storage directory for the messages. The directory
 "			    will be created if it doesn't exist yet.
-"   a:options.range         A |:range| expression limiting the lines of the
-"			    buffer that should be persisted. This can be used to
-"			    filter away some content. Default is "", which
-"			    includes the entire buffer.
+"   a:options.range         A single (String) or List of |:range| expression(s)
+"                           limiting the lines of the buffer that should be
+"                           persisted. The first matching range will be used.
+"                           This can be used to filter away some content.
+"                           Default is "", which includes the entire buffer.
 "   a:options.whenRangeNoMatch  Specifies the behavior when a:options.range
 "				doesn't match. One of:
 "				"error": an error message is printed and the
