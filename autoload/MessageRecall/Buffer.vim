@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2022 Ingo Karkat
+" Copyright: (C) 2012-2024 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -146,15 +146,23 @@ function! s:IsEmpty( rangeContents, ignorePattern ) abort
     \)
 endfunction
 function! s:IsReplace( range, whenRangeNoMatch, ignorePattern )
-    let l:isReplace = 0
-    try
-	let l:isReplace = s:IsEmpty(ingo#range#Get(a:range), a:ignorePattern)
-    catch /^Vim\%((\a\+)\)\=:/
-	if a:whenRangeNoMatch ==# 'all'
-	    let l:isReplace = s:IsEmpty(ingo#range#Get('%'), a:ignorePattern)
-	endif
-    endtry
-    return l:isReplace
+    let l:hasValidRange = 0
+    for l:range in ingo#list#Make(a:range)
+	try
+	    let l:rangeContents = ingo#range#Get(l:range)
+	    let l:hasValidRange = 1
+	    break
+	catch /^Vim\%((\a\+)\)\=:/
+	    " Try other range(s).
+	endtry
+    endfor
+    if ! l:hasValidRange
+	let l:rangeContents = (a:whenRangeNoMatch ==# 'all'
+	\   ? ingo#range#Get('%')
+	\   : ''
+	\)
+    endif
+    return [s:IsEmpty(l:rangeContents, a:ignorePattern), l:range, l:rangeContents]
 endfunction
 function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreDirspec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister )
     let l:filespec = s:GetMessageFilespec(-1 * a:count, a:filespec, a:messageStoreDirspec)
@@ -164,11 +172,19 @@ function! MessageRecall#Buffer#Recall( isReplace, count, filespec, messageStoreD
     return s:ReplaceWithFilespec(a:isReplace, l:filespec, a:range, a:whenRangeNoMatch, a:ignorePattern, a:replacedMessageRegister)
 endfunction
 function! s:ReplaceWithFilespec( isReplace, filespec, range, whenRangeNoMatch, ignorePattern, replacedMessageRegister )
-    let l:range = s:GetRange(a:range)
     let l:insertPoint = '.'
-    if a:isReplace || s:IsReplace(l:range, a:whenRangeNoMatch, a:ignorePattern)
+    let [l:isReplace, l:range, l:rangeContents] = s:IsReplace(a:range, a:whenRangeNoMatch, a:ignorePattern)
+    if l:isReplace || a:isReplace
 	try
-	    silent execute ingo#compat#commands#keeppatterns() l:range . 'delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
+	    if l:rangeContents ==# "\n"
+		" Keep a single empty line by just positioning the cursor to, without deleting
+		" the range. This is important to properly insert a recalled message before Git
+		" commit trailers (which must always be separated from the message body via an
+		" empty line).
+		silent execute ingo#compat#commands#keeppatterns() l:range
+	    else
+		silent execute ingo#compat#commands#keeppatterns() l:range . 'delete' (empty(a:replacedMessageRegister) ? '_' : a:replacedMessageRegister)
+	    endif
 	    let b:MessageRecall_Filespec = fnamemodify(a:filespec, ':p')
 	    " After the deletion, the cursor is on the following line. Prepend
 	    " before that.
@@ -269,7 +285,7 @@ function! MessageRecall#Buffer#Replace( isPrevious, count, messageStoreDirspec, 
 	\   s:ReplaceWithFilespec(1, l:replacementFilespec, a:range, a:whenRangeNoMatch, a:ignorePattern, '')
 	\)
 	" Do not use a:replacedMessageRegister here, as we're replacing a previous recalled message, not original buffer contents.
-    elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch, a:ignorePattern)
+    elseif ! &l:modified && s:IsReplace(s:GetRange(a:range), a:whenRangeNoMatch, a:ignorePattern)[0]
 	" Replace for the first time in the original message buffer.
 	return MessageRecall#Buffer#Recall(1, a:isPrevious ? a:count : (-1 * (a:count - 1)), '', a:messageStoreDirspec, a:range, a:whenRangeNoMatch, a:ignorePattern, a:replacedMessageRegister)
     else
